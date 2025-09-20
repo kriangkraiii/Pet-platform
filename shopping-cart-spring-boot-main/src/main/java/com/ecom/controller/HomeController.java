@@ -27,13 +27,9 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.multipart.MultipartFile;
 
-import com.ecom.model.Category;
-import com.ecom.model.Product;
-import com.ecom.model.UserDtls;
-import com.ecom.service.CartService;
-import com.ecom.service.CategoryService;
-import com.ecom.service.ProductService;
-import com.ecom.service.UserService;
+import com.ecom.model.*;
+import com.ecom.service.*;
+
 import com.ecom.util.CommonUtil;
 
 import io.micrometer.common.util.StringUtils;

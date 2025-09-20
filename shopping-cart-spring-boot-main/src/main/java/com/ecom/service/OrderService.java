@@ -4,8 +4,8 @@ import java.util.List;
 
 import org.springframework.data.domain.Page;
 
-import com.ecom.model.OrderRequest;
-import com.ecom.model.ProductOrder;
+import com.ecom.model.*;
+
 
 public interface OrderService {
 

@@ -7,12 +7,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.ObjectUtils;
 
-import com.ecom.model.Cart;
-import com.ecom.model.Product;
-import com.ecom.model.UserDtls;
-import com.ecom.repository.CartRepository;
-import com.ecom.repository.ProductRepository;
-import com.ecom.repository.UserRepository;
+import com.ecom.model.*;
+
+import com.ecom.repository.*;
+
 import com.ecom.service.CartService;
 
 @Service

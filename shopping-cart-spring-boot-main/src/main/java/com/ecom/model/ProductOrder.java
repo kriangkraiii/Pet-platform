@@ -15,6 +15,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.Data;
+import com.ecom.model.*;
 @AllArgsConstructor
 @NoArgsConstructor
 @Getter
