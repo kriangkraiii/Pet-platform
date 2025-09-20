@@ -1,6 +1,7 @@
 package com.ecom.service.impl;
 
 import java.time.LocalDate;
+
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;
@@ -22,8 +23,11 @@ import com.ecom.repository.ProductOrderRepository;
 import com.ecom.service.OrderService;
 import com.ecom.util.CommonUtil;
 import com.ecom.util.OrderStatus;
+import lombok.Data;
+
 
 @Service
+@Data
 public class OrderServiceImpl implements OrderService {
 
 	@Autowired

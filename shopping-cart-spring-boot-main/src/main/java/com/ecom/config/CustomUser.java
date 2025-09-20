@@ -8,7 +8,8 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import com.ecom.model.UserDtls;
-
+import lombok.Data;
+@Data
 public class CustomUser implements UserDetails {
 
 	private UserDtls user;

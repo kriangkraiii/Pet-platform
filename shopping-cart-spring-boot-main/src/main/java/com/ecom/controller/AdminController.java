@@ -37,7 +37,8 @@ import com.ecom.util.CommonUtil;
 import com.ecom.util.OrderStatus;
 
 import jakarta.servlet.http.HttpSession;
-
+import lombok.Data;
+@Data
 @Controller
 @RequestMapping("/admin")
 public class AdminController {
