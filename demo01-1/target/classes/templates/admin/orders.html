@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" th:replace="~{layout :: layout(~{::title}, ~{::main})}">
+<head>
+    <title>Manage Orders - Admin</title>
+</head>
+<body>
+    <main>
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1><i class="fas fa-shopping-cart"></i> Manage Orders</h1>
+            <div class="btn-group" role="group">
+                <a th:href="@{/admin/orders}" class="btn btn-outline-primary">All Orders</a>
+                <a th:href="@{/admin/orders(status='WAITING_CONFIRMATION')}" class="btn btn-outline-warning">Pending</a>
+                <a th:href="@{/admin/orders(status='PAID')}" class="btn btn-outline-success">Paid</a>
+                <a th:href="@{/admin/orders(status='SHIPPED')}" class="btn btn-outline-info">Shipped</a>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>Order ID</th>
+                                <th>Customer</th>
+                                <th>Total Amount</th>
+                                <th>Status</th>
+                                <th>Payment Slip</th>
+                                <th>Created At</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="order : ${orders.content}">
+                                <td>
+                                    <a th:href="@{/admin/orders/{id}(id=${order.id})}" 
+                                       class="text-decoration-none">
+                                        #<span th:text="${order.id}"></span>
+                                    </a>
+                                </td>
+                                <td th:text="${order.user.username}"></td>
+                                <td th:text="'$' + ${order.totalAmount}"></td>
+                                <td>
+                                    <span class="badge" 
+                                          th:classappend="${order.status.name() == 'CREATED'} ? 'bg-secondary' : 
+                                                         (${order.status.name() == 'WAITING_CONFIRMATION'} ? 'bg-warning' : 
+                                                         (${order.status.name() == 'PAID'} ? 'bg-success' : 
+                                                         (${order.status.name() == 'SHIPPED'} ? 'bg-info' : 
+                                                         (${order.status.name() == 'COMPLETED'} ? 'bg-primary' : 
+                                                         (${order.status.name() == 'REJECTED'} ? 'bg-danger' : 'bg-dark')))))"
+                                          th:text="${order.status}"></span>
+                                </td>
+                                <td>
+                                    <span th:if="${order.paymentSlipPath}" class="text-success">
+                                        <i class="fas fa-check"></i> Uploaded
+                                    </span>
+                                    <span th:unless="${order.paymentSlipPath}" class="text-muted">
+                                        <i class="fas fa-times"></i> None
+                                    </span>
+                                </td>
+                                <td th:text="${#temporals.format(order.createdAt, 'dd/MM/yyyy HH:mm')}"></td>
+                                <td>
+                                    <div class="btn-group" role="group">
+                                        <a th:href="@{/admin/orders/{id}(id=${order.id})}" 
+                                           class="btn btn-sm btn-outline-primary">
+                                            <i class="fas fa-eye"></i> View
+                                        </a>
+                                        
+                                        <!-- Approve button for waiting confirmation orders -->
+                                        <form th:if="${order.status.name() == 'WAITING_CONFIRMATION'}"
+                                              th:action="@{/admin/orders/{id}/approve(id=${order.id})}" 
+                                              method="post" class="d-inline">
+                                            <button type="submit" class="btn btn-sm btn-success"
+                                                    onclick="return confirm('Approve this payment?')">
+                                                <i class="fas fa-check"></i> Approve
+                                            </button>
+                                        </form>
+                                        
+                                        <!-- Reject button for waiting confirmation orders -->
+                                        <form th:if="${order.status.name() == 'WAITING_CONFIRMATION'}"
+                                              th:action="@{/admin/orders/{id}/reject(id=${order.id})}" 
+                                              method="post" class="d-inline">
+                                            <button type="submit" class="btn btn-sm btn-danger"
+                                                    onclick="return confirm('Reject this payment?')">
+                                                <i class="fas fa-times"></i> Reject
+                                            </button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Pagination -->
+                <div th:if="${orders.totalPages > 1}" class="d-flex justify-content-center">
+                    <nav>
+                        <ul class="pagination">
+                            <li class="page-item" th:classappend="${orders.first} ? 'disabled'">
+                                <a class="page-link" th:href="@{/admin/orders(page=${orders.number - 1})}">Previous</a>
+                            </li>
+                            <li class="page-item" th:each="i : ${#numbers.sequence(0, orders.totalPages - 1)}"
+                                th:classappend="${i == orders.number} ? 'active'">
+                                <a class="page-link" th:href="@{/admin/orders(page=${i})}" th:text="${i + 1}"></a>
+                            </li>
+                            <li class="page-item" th:classappend="${orders.last} ? 'disabled'">
+                                <a class="page-link" th:href="@{/admin/orders(page=${orders.number + 1})}">Next</a>
+                            </li>
+                        </ul>
+                    </nav>
+                </div>
+            </div>
+        </div>
+    </main>
+</body>
+</html>
