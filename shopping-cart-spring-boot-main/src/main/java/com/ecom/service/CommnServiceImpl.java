@@ -28,4 +28,8 @@ public class CommnServiceImpl implements CommonService {
 	{
 		return rupeeSign;
 	}
+	public String bahtSign() {
+	    return "&#3647;"; // Thai Baht symbol (฿)
+	}
+
 }

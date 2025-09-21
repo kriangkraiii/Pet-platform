@@ -2,7 +2,7 @@
 <html lang="en" xmlns:th="http://www.thymeleaf.org"
 	th:replace="~{base::layout(~{::section})}">
 <head>
-<meta charset="ISO-8859-1">
+<meta charset="UTF-8">
 <title>Insert title here</title>
 </head>
 <body>
@@ -49,7 +49,7 @@
 							Days Replacement & Return
 						</p>
 						<p class="fs-5 fw-bold">
-							Price :&nbsp; &nbsp; &nbsp; &nbsp;<th:block th:utext="${@commnServiceImpl.rupeeSign()}"></th:block>
+							Price :&nbsp; &nbsp; &nbsp; &nbsp;<th:block th:utext="${@commnServiceImpl.bahtSign()}"></th:block>
 							[[${product.discountPrice}]] <span
 								class="fs-6 text-decoration-line-through text-secondary">[[${product.price}]]</span>
 							<span class="fs-6  text-success">[[${product.discount}]]%
