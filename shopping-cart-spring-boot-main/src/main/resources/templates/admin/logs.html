@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org"
+    th:replace="~{base::layout(~{::section})}">
+<head>
+<meta charset="UTF-8">
+<title>Admin Activity Logs</title>
+</head>
+<body>
+    <section>
+        <div class="container-fluid mt-5 p-5">
+            <div class="card card-sh">
+                <div class="card-header text-center">
+                    <p class="fs-4">Admin Activity Logs</p>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-bordered">
+                            <thead class="table-light">
+                                <tr>
+                                    <th scope="col">ID</th>
+                                    <th scope="col">Admin</th>
+                                    <th scope="col">Action</th>
+                                    <th scope="col">Details</th>
+                                    <th scope="col">Date & Time</th>
+                                    
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr th:each="log : ${logs}">
+                                    <td>[[${log.id}]]</td>
+                                    <td>
+                                        <strong>[[${log.adminName}]]</strong><br>
+                                        <small class="text-muted">[[${log.adminEmail}]]</small>
+                                    </td>
+                                    <td>
+                                        <span class="badge" 
+                                              th:classappend="${log.action.contains('FAILED') ? 'bg-danger' : 
+                                                             log.action.contains('DELETE') ? 'bg-warning' : 
+                                                             'bg-success'}">
+                                            [[${log.action}]]
+                                        </span>
+                                    </td>
+                                    <td>[[${log.details}]]</td>
+                                    <td>
+                                        <small>[[${#temporals.format(log.timestamp, 'dd/MM/yyyy HH:mm:ss')}]]</small>
+                                    </td>
+                                    
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <!-- Pagination -->
+                    <nav th:if="${totalPages > 1}">
+                        <ul class="pagination justify-content-center">
+                            <li class="page-item" th:classappend="${isFirst} ? 'disabled'">
+                                <a class="page-link" th:href="@{/admin/logs(pageNo=${pageNo-1}, pageSize=${pageSize})}">Previous</a>
+                            </li>
+                            
+                            <th:block th:each="i : ${#numbers.sequence(0, totalPages-1)}">
+                                <li class="page-item" th:classappend="${i == pageNo} ? 'active'">
+                                    <a class="page-link" th:href="@{/admin/logs(pageNo=${i}, pageSize=${pageSize})}">[[${i+1}]]</a>
+                                </li>
+                            </th:block>
+                            
+                            <li class="page-item" th:classappend="${isLast} ? 'disabled'">
+                                <a class="page-link" th:href="@{/admin/logs(pageNo=${pageNo+1}, pageSize=${pageSize})}">Next</a>
+                            </li>
+                        </ul>
+                    </nav>
+                </div>
+            </div>
+        </div>
+    </section>
+</body>
+</html>

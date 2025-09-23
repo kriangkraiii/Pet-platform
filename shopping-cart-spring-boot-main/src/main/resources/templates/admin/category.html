@@ -29,7 +29,7 @@
 								enctype="multipart/form-data">
 								<div class="mb-3">
 									<label>Enter Category</label> <input type="text" name="name"
-										class="form-control">
+										class="form-control" required>
 								</div>
 
 								<div class="mb-3">
@@ -52,9 +52,9 @@
 
 								<div class="mb-3">
 									<label>Upload Image</label> <input type="file" name="file"
-										class="form-control">
+										class="form-control" required accept="image/*">
 								</div>
-								<button class="btn btn-primary col-md-12 mt-2">Save</button>
+								<button type="submit" class="btn btn-primary col-md-12 mt-2">Save</button>
 							</form>
 						</div>
 					</div>
@@ -97,32 +97,43 @@
 								<div class="col-md-4">Total Category :
 									[[${totalElements}]]</div>
 								<div class="col-md-6">
-
-									<nav aria-label="Page navigation example">
+									<nav aria-label="Page navigation example"
+										th:if="${totalPages > 1}">
 										<ul class="pagination">
 											<li class="page-item"
-												th:classappend="${isFirst} ? 'disabled':''"><a
-												class="page-link"
-												th:href="@{'/admin/category?pageNo='+${pageNo-1}}"
-												aria-label="Previous"> <span aria-hidden="true">&laquo;</span>
-											</a></li>
+												th:classappend="${isFirst} ? 'disabled':''"><th:block
+													th:if="${!isFirst}">
+													<a class="page-link"
+														th:href="@{'/admin/category?pageNo='+${pageNo-1}}"
+														aria-label="Previous"> <span aria-hidden="true">&laquo;</span>
+													</a>
+												</th:block> <th:block th:if="${isFirst}">
+													<span class="page-link" aria-label="Previous"> <span
+														aria-hidden="true">&laquo;</span>
+													</span>
+												</th:block></li>
 
 											<li th:each="i:${#numbers.sequence(1,totalPages)}"
 												class="page-item"
-												th:classappend="${pageNo+1==i}?'active':''" ]]><a
+												th:classappend="${pageNo+1==i}?'active':''"><a
 												class="page-link"
 												th:href="@{'/admin/category?pageNo='+${i-1}}">[[${i}]]</a></li>
 
 											<li class="page-item"
-												th:classappend="${isLast} ? 'disabled':''"><a
-												class="page-link"
-												th:href="@{'/admin/category?pageNo='+${pageNo+1}}"
-												aria-label="Next"> <span aria-hidden="true">&raquo;</span>
-											</a></li>
+												th:classappend="${isLast} ? 'disabled':''"><th:block
+													th:if="${!isLast}">
+													<a class="page-link"
+														th:href="@{'/admin/category?pageNo='+${pageNo+1}}"
+														aria-label="Next"> <span aria-hidden="true">&raquo;</span>
+													</a>
+												</th:block> <th:block th:if="${isLast}">
+													<span class="page-link" aria-label="Next"> <span
+														aria-hidden="true">&raquo;</span>
+													</span>
+												</th:block></li>
 										</ul>
 									</nav>
 								</div>
-
 							</div>
 						</div>
 					</div>

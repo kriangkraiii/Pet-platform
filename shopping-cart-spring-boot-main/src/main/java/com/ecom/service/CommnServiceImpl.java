@@ -11,8 +11,8 @@ import jakarta.servlet.http.HttpSession;
 @Service
 public class CommnServiceImpl implements CommonService {
 
-	@Value("${rupee.sign}")
-	public String rupeeSign;
+	@Value("${baht.sign:&#3647;}")
+	private String bahtSign;
 	
 	@Override
 	public void removeSessionMessage() {
@@ -24,12 +24,7 @@ public class CommnServiceImpl implements CommonService {
 	}
 	
 	@Override
-	public String rupeeSign()
-	{
-		return rupeeSign;
-	}
 	public String bahtSign() {
-	    return "&#3647;"; // Thai Baht symbol (฿)
+		return bahtSign;
 	}
-
 }

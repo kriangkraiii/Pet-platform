@@ -3,7 +3,7 @@
 	th:replace="~{base::layout(~{::section})}">
 <head>
 <meta charset="UTF-8">
-<title>Insert title here</title>
+<title>add_product</title>
 </head>
 <body>
 	<section>
@@ -30,26 +30,26 @@
 								enctype="multipart/form-data">
 								<div class="mb-3">
 									<label>Enter Title</label> <input type="text" name="title"
-										class="form-control">
+										class="form-control" required>
 								</div>
 
 								<div class="mb-3">
 									<label>Enter Description</label>
 									<textarea rows="3" cols="" class="form-control"
-										name="description"></textarea>
+										name="description" required></textarea>
 								</div>
 
 								<div class="mb-3">
 									<label>Category</label> <select class="form-control"
-										name="category">
-										<option>--select--</option>
-										<option th:each="c:${categories}">[[${c.name}]]</option>
+										name="category" required>
+										<option value="">--select--</option>
+										<option th:each="c:${categories}" th:value="${c.name}">[[${c.name}]]</option>
 									</select>
 								</div>
 
 								<div class="mb-3">
 									<label>Enter Price</label> <input type="number" name="price"
-										class="form-control">
+										class="form-control" required min="0" step="0.01">
 								</div>
 								<div class="mb-3">
 									<label>Status</label>
@@ -71,16 +71,16 @@
 								<div class="row">
 
 									<div class="mb-3 col">
-										<label>Enter Stock</label> <input type="text" name="stock"
-											class="form-control">
+										<label>Enter Stock</label> <input type="number" name="stock"
+											class="form-control" required min="0">
 									</div>
 
 									<div class="mb-3 col">
 										<label>Upload Image</label> <input type="file" name="file"
-											class="form-control">
+											class="form-control" required accept="image/*">
 									</div>
 								</div>
-								<button class="btn btn-primary col-md-12">Submit</button>
+								<button type="submit" class="btn btn-primary col-md-12">Submit</button>
 							</form>
 						</div>
 					</div>

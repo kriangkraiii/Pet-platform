@@ -1,5 +1,6 @@
 package com.ecom.controller;
-
+import com.ecom.service.AdminLogService;
+import jakarta.servlet.http.HttpServletRequest;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -24,6 +25,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.ecom.model.AdminLog;
 import com.ecom.model.Category;
 import com.ecom.model.Product;
 import com.ecom.model.ProductOrder;
@@ -62,6 +64,81 @@ public class AdminController {
 
 	@Autowired
 	private PasswordEncoder passwordEncoder;
+	
+	@Autowired
+	private AdminLogService adminLogService;
+	private String getClientIpAddress(HttpServletRequest request) {
+	    String xForwardedFor = request.getHeader("X-Forwarded-For");
+	    if (xForwardedFor != null && !xForwardedFor.isEmpty()) {
+	        return xForwardedFor.split(",")[0];
+	    }
+	    return request.getRemoteAddr();
+	}
+
+	// Add logging endpoint
+	@GetMapping("/logs")
+	public String viewAdminLogs(Model m, 
+	                           @RequestParam(name = "pageNo", defaultValue = "0") Integer pageNo,
+	                           @RequestParam(name = "pageSize", defaultValue = "20") Integer pageSize) {
+	    
+	    Page<AdminLog> page = adminLogService.getAllLogs(pageNo, pageSize);
+	    m.addAttribute("logs", page.getContent());
+	    
+	    m.addAttribute("pageNo", page.getNumber());
+	    m.addAttribute("pageSize", pageSize);
+	    m.addAttribute("totalElements", page.getTotalElements());
+	    m.addAttribute("totalPages", page.getTotalPages());
+	    m.addAttribute("isFirst", page.isFirst());
+	    m.addAttribute("isLast", page.isLast());
+	    
+	    return "admin/logs";
+	}
+
+	// Update existing methods to include logging
+	@PostMapping("/saveCategory")
+	public String saveCategory(@ModelAttribute Category category, @RequestParam("file") MultipartFile file,
+	                          HttpSession session, Principal p, HttpServletRequest request) throws IOException {
+	    
+	    UserDtls admin = commonUtil.getLoggedInUserDetails(p);
+	    String ipAddress = getClientIpAddress(request);
+	    
+	    String imageName = file != null ? file.getOriginalFilename() : "default.jpg";
+	    category.setImageName(imageName);
+
+	    Boolean existCategory = categoryService.existCategory(category.getName());
+
+	    if (existCategory) {
+	        session.setAttribute("errorMsg", "Category Name already exists");
+	        adminLogService.logAction(admin.getEmail(), admin.getName(), 
+	                                "CREATE_CATEGORY_FAILED", 
+	                                "Failed to create category: " + category.getName() + " (already exists)", 
+	                                ipAddress);
+	    } else {
+	        Category saveCategory = categoryService.saveCategory(category);
+
+	        if (ObjectUtils.isEmpty(saveCategory)) {
+	            session.setAttribute("errorMsg", "Not saved ! internal server error");
+	            adminLogService.logAction(admin.getEmail(), admin.getName(), 
+	                                    "CREATE_CATEGORY_FAILED", 
+	                                    "Failed to create category: " + category.getName() + " (server error)", 
+	                                    ipAddress);
+	        } else {
+	            File saveFile = new ClassPathResource("static/img").getFile();
+	            Path path = Paths.get(saveFile.getAbsolutePath() + File.separator + "category_img" + File.separator
+	                    + file.getOriginalFilename());
+	            Files.copy(file.getInputStream(), path, StandardCopyOption.REPLACE_EXISTING);
+
+	            session.setAttribute("succMsg", "Saved successfully");
+	            adminLogService.logAction(admin.getEmail(), admin.getName(), 
+	                                    "CREATE_CATEGORY", 
+	                                    "Created new category: " + category.getName(), 
+	                                    ipAddress);
+	        }
+	    }
+
+	    return "redirect:/admin/category";
+	}
+
 
 	@ModelAttribute
 	public void getUserDetails(Principal p, Model m) {
@@ -107,39 +184,39 @@ public class AdminController {
 		return "admin/category";
 	}
 
-	@PostMapping("/saveCategory")
-	public String saveCategory(@ModelAttribute Category category, @RequestParam("file") MultipartFile file,
-			HttpSession session) throws IOException {
-
-		String imageName = file != null ? file.getOriginalFilename() : "default.jpg";
-		category.setImageName(imageName);
-
-		Boolean existCategory = categoryService.existCategory(category.getName());
-
-		if (existCategory) {
-			session.setAttribute("errorMsg", "Category Name already exists");
-		} else {
-
-			Category saveCategory = categoryService.saveCategory(category);
-
-			if (ObjectUtils.isEmpty(saveCategory)) {
-				session.setAttribute("errorMsg", "Not saved ! internal server error");
-			} else {
-
-				File saveFile = new ClassPathResource("static/img").getFile();
-
-				Path path = Paths.get(saveFile.getAbsolutePath() + File.separator + "category_img" + File.separator
-						+ file.getOriginalFilename());
-
-				// System.out.println(path);
-				Files.copy(file.getInputStream(), path, StandardCopyOption.REPLACE_EXISTING);
-
-				session.setAttribute("succMsg", "Saved successfully");
-			}
-		}
-
-		return "redirect:/admin/category";
-	}
+//	@PostMapping("/saveCategory")
+//	public String saveCategory(@ModelAttribute Category category, @RequestParam("file") MultipartFile file,
+//			HttpSession session) throws IOException {
+//
+//		String imageName = file != null ? file.getOriginalFilename() : "default.jpg";
+//		category.setImageName(imageName);
+//
+//		Boolean existCategory = categoryService.existCategory(category.getName());
+//
+//		if (existCategory) {
+//			session.setAttribute("errorMsg", "Category Name already exists");
+//		} else {
+//
+//			Category saveCategory = categoryService.saveCategory(category);
+//
+//			if (ObjectUtils.isEmpty(saveCategory)) {
+//				session.setAttribute("errorMsg", "Not saved ! internal server error");
+//			} else {
+//
+//				File saveFile = new ClassPathResource("static/img").getFile();
+//
+//				Path path = Paths.get(saveFile.getAbsolutePath() + File.separator + "category_img" + File.separator
+//						+ file.getOriginalFilename());
+//
+//				// System.out.println(path);
+//				Files.copy(file.getInputStream(), path, StandardCopyOption.REPLACE_EXISTING);
+//
+//				session.setAttribute("succMsg", "Saved successfully");
+//			}
+//		}
+//
+//		return "redirect:/admin/category";
+//	}
 
 	@GetMapping("/deleteCategory/{id}")
 	public String deleteCategory(@PathVariable int id, HttpSession session) {
