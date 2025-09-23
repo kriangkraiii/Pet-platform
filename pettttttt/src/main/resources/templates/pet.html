@@ -1,0 +1,65 @@
+<!-- src/main/resources/templates/pet.html -->
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org" th:replace="~{base::layout(~{::section})}">
+
+<head>
+	<meta charset="ISO-8859-1">
+	<title>My Pets</title>
+</head>
+
+<body>
+	<section>
+		<div class="container profile-card">
+			<div class="container profile-card">
+
+				<!-- Form to add a new pet -->
+				<h3>Add a New Pet</h3>
+				<form th:action="@{/user/pet/add}" method="post"><input type="text" name="name" placeholder="Pet Name"
+						required><input type="text" name="type" placeholder="Pet Type" required><input type="text"
+						name="breed" placeholder="Breed" required><input type="number" name="age" placeholder="Age"
+						required><input type="text" name="color" placeholder="Color" required>
+						<input type="text" name="description" placeholder="Description" required>
+						<input type="file" name="imagePet" placeholder="Image Pet" accept="image/*">
+						<button type="submit"
+						class="btn btn-primary">Add Pet</button>
+					<div th:if="${session.succMsg}" class="alert alert-success" th:text="${session.succMsg}"></div>
+					<div th:if="${session.errorMsg}" class="alert alert-danger" th:text="${session.errorMsg}"></div>
+				</form>
+				<br>
+
+				<!-- Display pets in a table if available -->
+				<h2>My Pets</h2>
+				<div th:if="${noPetsMsg}" class="alert alert-info" th:text="${noPetsMsg}"></div>
+				<table th:if="${pets}" class="table table-striped">
+					<thead>
+						<tr>
+							<th>Name</th>
+							<th>Type</th>
+							<th>Breed</th>
+							<th>Age</th>
+							<th>Color</th>
+							<th>Image</th>
+							<th>Description</th>
+						</tr>
+					</thead>
+					<tbody>
+						<tr th:each="pet : ${pets}">
+							<td th:text="${pet.name}"></td>
+							<td th:text="${pet.type}"></td>
+							<td th:text="${pet.breed}"></td>
+							<td th:text="${pet.age}"></td>
+							<td th:text="${pet.color}"></td>
+							<td><img th:src="@{${pet.imagePet}}" alt="Pet Image" width="100"></td>
+							<td th:text="${pet.description}"></td>
+							
+						</tr>
+					</tbody>
+			</div>
+			</table>
+
+
+		</div>
+	</section>
+</body>
+
+</html>
