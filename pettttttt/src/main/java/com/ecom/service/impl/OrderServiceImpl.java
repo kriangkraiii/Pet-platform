@@ -2,7 +2,9 @@ package com.ecom.service.impl;
 
 import java.time.LocalDate;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -22,6 +24,7 @@ import com.ecom.repository.ProductOrderRepository;
 import com.ecom.service.OrderService;
 import com.ecom.util.CommonUtil;
 import com.ecom.util.OrderStatus;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class OrderServiceImpl implements OrderService {
@@ -34,6 +37,48 @@ public class OrderServiceImpl implements OrderService {
 
 	@Autowired
 	private CommonUtil commonUtil;
+
+	@Override
+	public Map<String, Long> getOrderStatusCounts() {
+		List<ProductOrder> allOrders = orderRepository.findAll();
+
+		Map<String, Long> statusCounts = new HashMap<>();
+		statusCounts.put("Total", (long) allOrders.size());
+		statusCounts.put("In Progress",
+				allOrders.stream().filter(order -> "In Progress".equals(order.getStatus())).count());
+		statusCounts.put("Order Received",
+				allOrders.stream().filter(order -> "Order Received".equals(order.getStatus())).count());
+		statusCounts.put("Product Packed",
+				allOrders.stream().filter(order -> "Product Packed".equals(order.getStatus())).count());
+		statusCounts.put("Out for Delivery",
+				allOrders.stream().filter(order -> "Out for Delivery".equals(order.getStatus())).count());
+		statusCounts.put("Delivered",
+				allOrders.stream().filter(order -> "Delivered".equals(order.getStatus())).count());
+		statusCounts.put("Cancelled",
+				allOrders.stream().filter(order -> "Cancelled".equals(order.getStatus())).count());
+
+		return statusCounts;
+	}
+
+	@Override
+	public ProductOrder getOrderById(Integer id) {
+		return orderRepository.findById(id).orElse(null);
+	}
+
+	@Override
+	public Boolean deleteOrder(Integer orderId) {
+	    try {
+	        ProductOrder order = orderRepository.findById(orderId).orElse(null);
+	        if (order != null) {
+	            orderRepository.delete(order);
+	            return true;
+	        }
+	        return false;
+	    } catch (Exception e) {
+	        e.printStackTrace();
+	        return false;
+	    }
+	}
 
 	@Override
 	public void saveOrder(Integer userid, OrderRequest orderRequest) throws Exception {
@@ -73,9 +118,11 @@ public class OrderServiceImpl implements OrderService {
 			commonUtil.sendMailForProductOrder(saveOrder, "success");
 		}
 	}
+
 	private void resetCart(UserDtls user) {
 		cartRepository.deleteByUser(user);
 	}
+
 	@Override
 	public List<ProductOrder> getOrdersByUser(Integer userId) {
 		List<ProductOrder> orders = orderRepository.findByUserId(userId);

@@ -1,6 +1,7 @@
 package com.ecom.service;
 
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.data.domain.Page;
 
@@ -18,6 +19,13 @@ public interface OrderService {
 	public List<ProductOrder> getAllOrders();
 
 	public ProductOrder getOrdersByOrderId(String orderId);
+
+	public Page<ProductOrder> getAllOrdersPagination(Integer pageNo, Integer pageSize);
+
+	public Boolean deleteOrder(Integer orderId);
+
+	public ProductOrder getOrderById(Integer id);
+
 	
-	public Page<ProductOrder> getAllOrdersPagination(Integer pageNo,Integer pageSize);
+	public Map<String, Long> getOrderStatusCounts();
 }

@@ -14,9 +14,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.data.domain.Page;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.web.csrf.CsrfToken;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.util.ObjectUtils;
+import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -24,6 +26,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import com.ecom.model.AdminLog;
 import com.ecom.model.Category;
@@ -43,7 +46,8 @@ import jakarta.servlet.http.HttpSession;
 @Controller
 @RequestMapping("/admin")
 public class AdminController {
-
+	@Autowired
+	private HttpServletRequest request;
 	@Autowired
 	private CategoryService categoryService;
 
@@ -67,13 +71,66 @@ public class AdminController {
 	
 	@Autowired
 	private AdminLogService adminLogService;
-	private String getClientIpAddress(HttpServletRequest request) {
-	    String xForwardedFor = request.getHeader("X-Forwarded-For");
-	    if (xForwardedFor != null && !xForwardedFor.isEmpty()) {
-	        return xForwardedFor.split(",")[0];
-	    }
-	    return request.getRemoteAddr();
+	
+	// Consider adding more specific exception handling
+	@ExceptionHandler(IOException.class)
+	public String handleIOException(IOException e, HttpSession session) {
+	    session.setAttribute("errorMsg", "File operation failed");
+	    return "redirect:/admin/";
 	}
+
+
+//	@GetMapping("/deleteOrder/{id}")
+//	public String deleteOrder(@PathVariable Integer id, HttpServletRequest request, RedirectAttributes redirectAttributes, Principal p) {
+//	    try {
+//	        // Get the order before deleting for logging
+//	        ProductOrder order = orderService.getOrderById(id);
+//	        if (order != null) {
+//	            // Check if order can be deleted (only allow deletion of cancelled orders for safety)
+//	            if (!"Cancelled".equals(order.getStatus())) {
+//	                redirectAttributes.addFlashAttribute("errorMsg", "Only cancelled orders can be deleted");
+//	                return "redirect:/admin/orders";
+//	            }
+//	            
+//	            // Delete the order
+//	            Boolean isDeleted = orderService.deleteOrder(id);
+//	            
+//	            if (isDeleted) {
+//	                // Log the admin action
+//	                UserDtls admin = commonUtil.getLoggedInUserDetails(p);
+//	                String ipAddress = getClientIpAddress(request);
+//	                adminLogService.logAction(admin.getEmail(), admin.getName(), "DELETE_ORDER", 
+//	                    "Deleted order: " + order.getOrderId(), ipAddress);
+//	                
+//	                redirectAttributes.addFlashAttribute("succMsg", "Order deleted successfully");
+//	            } else {
+//	                redirectAttributes.addFlashAttribute("errorMsg", "Failed to delete order");
+//	            }
+//	        } else {
+//	            redirectAttributes.addFlashAttribute("errorMsg", "Order not found");
+//	        }
+//	    } catch (Exception e) {
+//	        redirectAttributes.addFlashAttribute("errorMsg", "Cannot delete order: " + e.getMessage());
+//	        e.printStackTrace();
+//	    }
+//	    
+//	    return "redirect:/admin/orders";
+//	}
+
+
+//	@GetMapping("/deleteOrder/{id}")
+//	public String deleteOrder(@PathVariable Integer id, HttpSession session) {
+//	    Boolean isDeleted = orderService.deleteOrder(id);
+//	    
+//	    if (isDeleted) {
+//	        session.setAttribute("succMsg", "Order deleted successfully");
+//	    } else {
+//	        session.setAttribute("errorMsg", "Failed to delete order");
+//	    }
+//	    
+//	    return "redirect:/admin/orders";
+//	}
+
 
 	// Add logging endpoint
 	@GetMapping("/logs")
@@ -138,7 +195,56 @@ public class AdminController {
 
 	    return "redirect:/admin/category";
 	}
+	
 
+//	@PostMapping("/delete-order")
+//	public String deleteOrder(@RequestParam Integer orderId, HttpSession session, Principal p) {
+//	    try {
+//	        // First check if the order exists and is cancelled
+//	        ProductOrder order = orderService.getOrderById(orderId);
+//	        
+//	        if (order == null) {
+//	            session.setAttribute("errorMsg", "Order not found");
+//	            return "redirect:/admin/orders";
+//	        }
+//	        
+//	        if (!"Cancelled".equals(order.getStatus())) {
+//	            session.setAttribute("errorMsg", "Only cancelled orders can be deleted");
+//	            return "redirect:/admin/orders";
+//	        }
+//	        
+//	        // Log admin action
+//	        UserDtls loggedInUser = commonUtil.getLoggedInUserDetails(p);
+//	        String ipAddress = getClientIpAddress(request);
+//	        adminLogService.logAction(loggedInUser.getEmail(), loggedInUser.getName(),
+//	                "DELETE_ORDER", "Deleted cancelled order: " + order.getOrderId(), ipAddress);
+//	        
+//	        // Delete the order
+//	       
+//	        Boolean isDeleted = orderService.deleteOrder(orderId);
+//	        
+//	        if (isDeleted) {
+//	            session.setAttribute("succMsg", "Order deleted successfully");
+//	        } else {
+//	            session.setAttribute("errorMsg", "Failed to delete order");
+//	        }
+//	        
+//	    } catch (Exception e) {
+//	       
+//	        session.setAttribute("errorMsg", "Cannot delete order: " + e.getMessage());
+//	        e.printStackTrace();
+//	    }
+//	    
+//	    return "redirect:/admin/orders";
+//	}
+
+	private String getClientIpAddress(HttpServletRequest request) {
+	    String xForwardedFor = request.getHeader("X-Forwarded-For");
+	    if (xForwardedFor != null && !xForwardedFor.isEmpty()) {
+	        return xForwardedFor.split(",")[0];
+	    }
+	    return request.getRemoteAddr();
+	}
 
 	@ModelAttribute
 	public void getUserDetails(Principal p, Model m) {
@@ -219,16 +325,28 @@ public class AdminController {
 //	}
 
 	@GetMapping("/deleteCategory/{id}")
-	public String deleteCategory(@PathVariable int id, HttpSession session) {
-		Boolean deleteCategory = categoryService.deleteCategory(id);
+	public String deleteCategory(@PathVariable int id, HttpSession session, Principal p) {
+	    UserDtls admin = commonUtil.getLoggedInUserDetails(p);
+	    String ipAddress = getClientIpAddress(request);
+	    Category category = categoryService.getCategoryById(id);
+	    
+	    Boolean deleteCategory = categoryService.deleteCategory(id);
 
-		if (deleteCategory) {
-			session.setAttribute("succMsg", "category delete success");
-		} else {
-			session.setAttribute("errorMsg", "something wrong on server");
-		}
+	    if (deleteCategory) {
+	        session.setAttribute("succMsg", "category delete success");
+	        adminLogService.logAction(admin.getEmail(), admin.getName(), 
+	                                "DELETE_CATEGORY", 
+	                                "Deleted category: " + (category != null ? category.getName() : "ID " + id), 
+	                                ipAddress);
+	    } else {
+	        session.setAttribute("errorMsg", "something wrong on server");
+	        adminLogService.logAction(admin.getEmail(), admin.getName(), 
+	                                "DELETE_CATEGORY_FAILED", 
+	                                "Failed to delete category ID: " + id, 
+	                                ipAddress);
+	    }
 
-		return "redirect:/admin/category";
+	    return "redirect:/admin/category";
 	}
 
 	@GetMapping("/loadEditCategory/{id}")
@@ -239,109 +357,141 @@ public class AdminController {
 
 	@PostMapping("/updateCategory")
 	public String updateCategory(@ModelAttribute Category category, @RequestParam("file") MultipartFile file,
-			HttpSession session) throws IOException {
+	        HttpSession session, Principal p) throws IOException {
 
-		Category oldCategory = categoryService.getCategoryById(category.getId());
-		String imageName = file.isEmpty() ? oldCategory.getImageName() : file.getOriginalFilename();
+	    UserDtls admin = commonUtil.getLoggedInUserDetails(p);
+	    String ipAddress = getClientIpAddress(request);
 
-		if (!ObjectUtils.isEmpty(category)) {
+	    Category oldCategory = categoryService.getCategoryById(category.getId());
+	    String imageName = file.isEmpty() ? oldCategory.getImageName() : file.getOriginalFilename();
 
-			oldCategory.setName(category.getName());
-			oldCategory.setIsActive(category.getIsActive());
-			oldCategory.setImageName(imageName);
-		}
+	    if (!ObjectUtils.isEmpty(category)) {
+	        oldCategory.setName(category.getName());
+	        oldCategory.setIsActive(category.getIsActive());
+	        oldCategory.setImageName(imageName);
+	    }
 
-		Category updateCategory = categoryService.saveCategory(oldCategory);
+	    Category updateCategory = categoryService.saveCategory(oldCategory);
 
-		if (!ObjectUtils.isEmpty(updateCategory)) {
+	    if (!ObjectUtils.isEmpty(updateCategory)) {
+	        if (!file.isEmpty()) {
+	            File saveFile = new ClassPathResource("static/img").getFile();
+	            Path path = Paths.get(saveFile.getAbsolutePath() + File.separator + "category_img" + File.separator
+	                    + file.getOriginalFilename());
+	            Files.copy(file.getInputStream(), path, StandardCopyOption.REPLACE_EXISTING);
+	        }
 
-			if (!file.isEmpty()) {
-				File saveFile = new ClassPathResource("static/img").getFile();
+	        session.setAttribute("succMsg", "Category update success");
+	        adminLogService.logAction(admin.getEmail(), admin.getName(), 
+	                                "UPDATE_CATEGORY", 
+	                                "Updated category: " + category.getName(), 
+	                                ipAddress);
+	    } else {
+	        session.setAttribute("errorMsg", "something wrong on server");
+	        adminLogService.logAction(admin.getEmail(), admin.getName(), 
+	                                "UPDATE_CATEGORY_FAILED", 
+	                                "Failed to update category: " + category.getName(), 
+	                                ipAddress);
+	    }
 
-				Path path = Paths.get(saveFile.getAbsolutePath() + File.separator + "category_img" + File.separator
-						+ file.getOriginalFilename());
-
-				// System.out.println(path);
-				Files.copy(file.getInputStream(), path, StandardCopyOption.REPLACE_EXISTING);
-			}
-
-			session.setAttribute("succMsg", "Category update success");
-		} else {
-			session.setAttribute("errorMsg", "something wrong on server");
-		}
-
-		return "redirect:/admin/loadEditCategory/" + category.getId();
+	    return "redirect:/admin/loadEditCategory/" + category.getId();
 	}
 
 	@PostMapping("/saveProduct")
 	public String saveProduct(@ModelAttribute Product product, @RequestParam("file") MultipartFile image,
-			HttpSession session) throws IOException {
+	        HttpSession session, Principal p) throws IOException {
 
-		String imageName = image.isEmpty() ? "default.jpg" : image.getOriginalFilename();
+	    UserDtls admin = commonUtil.getLoggedInUserDetails(p);
+	    String ipAddress = getClientIpAddress(request);
 
-		product.setImage(imageName);
-		product.setDiscount(0);
-		product.setDiscountPrice(product.getPrice());
-		Product saveProduct = productService.saveProduct(product);
+	    String imageName = image.isEmpty() ? "default.jpg" : image.getOriginalFilename();
+	    product.setImage(imageName);
+	    product.setDiscount(0);
+	    product.setDiscountPrice(product.getPrice());
+	    Product saveProduct = productService.saveProduct(product);
 
-		if (!ObjectUtils.isEmpty(saveProduct)) {
+	    if (!ObjectUtils.isEmpty(saveProduct)) {
+	        File saveFile = new ClassPathResource("static/img").getFile();
+	        Path path = Paths.get(saveFile.getAbsolutePath() + File.separator + "product_img" + File.separator
+	                + image.getOriginalFilename());
+	        Files.copy(image.getInputStream(), path, StandardCopyOption.REPLACE_EXISTING);
 
-			File saveFile = new ClassPathResource("static/img").getFile();
+	        session.setAttribute("succMsg", "Product Saved Success");
+	        adminLogService.logAction(admin.getEmail(), admin.getName(), 
+	                                "CREATE_PRODUCT", 
+	                                "Created new product: " + product.getTitle(), 
+	                                ipAddress);
+	    } else {
+	        session.setAttribute("errorMsg", "something wrong on server");
+	        adminLogService.logAction(admin.getEmail(), admin.getName(), 
+	                                "CREATE_PRODUCT_FAILED", 
+	                                "Failed to create product: " + product.getTitle(), 
+	                                ipAddress);
+	    }
 
-			Path path = Paths.get(saveFile.getAbsolutePath() + File.separator + "product_img" + File.separator
-					+ image.getOriginalFilename());
-
-			// System.out.println(path);
-			Files.copy(image.getInputStream(), path, StandardCopyOption.REPLACE_EXISTING);
-
-			session.setAttribute("succMsg", "Product Saved Success");
-		} else {
-			session.setAttribute("errorMsg", "something wrong on server");
-		}
-
-		return "redirect:/admin/loadAddProduct";
+	    return "redirect:/admin/loadAddProduct";
 	}
 
 	@GetMapping("/products")
 	public String loadViewProduct(Model m, @RequestParam(defaultValue = "") String ch,
-			@RequestParam(name = "pageNo", defaultValue = "0") Integer pageNo,
-			@RequestParam(name = "pageSize", defaultValue = "10") Integer pageSize) {
+	        @RequestParam(name = "pageNo", defaultValue = "0") Integer pageNo,
+	        @RequestParam(name = "pageSize", defaultValue = "10") Integer pageSize) {
 
-//		List<Product> products = null;
-//		if (ch != null && ch.length() > 0) {
-//			products = productService.searchProduct(ch);
-//		} else {
-//			products = productService.getAllProducts();
-//		}
-//		m.addAttribute("products", products);
+	    // Limit maximum page size for better performance
+	    if (pageSize > 50) {
+	        pageSize = 50;
+	    }
 
-		Page<Product> page = null;
-		if (ch != null && ch.length() > 0) {
-			page = productService.searchProductPagination(pageNo, pageSize, ch);
-		} else {
-			page = productService.getAllProductsPagination(pageNo, pageSize);
-		}
-		m.addAttribute("products", page.getContent());
+	    Page<Product> page = null;
+	    if (ch != null && ch.length() > 0) {
+	        page = productService.searchProductPagination(pageNo, pageSize, ch);
+	    } else {
+	        page = productService.getAllProductsPagination(pageNo, pageSize);
+	    }
 
-		m.addAttribute("pageNo", page.getNumber());
-		m.addAttribute("pageSize", pageSize);
-		m.addAttribute("totalElements", page.getTotalElements());
-		m.addAttribute("totalPages", page.getTotalPages());
-		m.addAttribute("isFirst", page.isFirst());
-		m.addAttribute("isLast", page.isLast());
+	    // Calculate statistics efficiently
+	    List<Product> products = page.getContent();
+	    long activeProductsCount = products.stream().filter(Product::getIsActive).count();
 
-		return "admin/products";
+	    long lowStockCount = products.stream().filter(p -> p.getStock() != null && p.getStock().intValue() < 10).count();
+
+	    // Add attributes for the view
+	    m.addAttribute("products", products);
+	    m.addAttribute("activeProductsCount", activeProductsCount);
+	    m.addAttribute("lowStockCount", lowStockCount);
+	    m.addAttribute("pageNo", page.getNumber());
+	    m.addAttribute("pageSize", pageSize);
+	    m.addAttribute("totalElements", page.getTotalElements());
+	    m.addAttribute("totalPages", page.getTotalPages());
+	    m.addAttribute("isFirst", page.isFirst());
+	    m.addAttribute("isLast", page.isLast());
+
+	    return "admin/products";
 	}
 
+
+
 	@GetMapping("/deleteProduct/{id}")
-	public String deleteProduct(@PathVariable int id, HttpSession session) {
-		Boolean deleteProduct = productService.deleteProduct(id);
-		if (deleteProduct) {
-			session.setAttribute("succMsg", "Product delete success");
-		} else {
-			session.setAttribute("errorMsg", "Something wrong on server");
-		}
-		return "redirect:/admin/products";
+	public String deleteProduct(@PathVariable int id, HttpSession session, Principal p) {
+	    UserDtls admin = commonUtil.getLoggedInUserDetails(p);
+	    String ipAddress = getClientIpAddress(request);
+	    Product product = productService.getProductById(id);
+	    
+	    Boolean deleteProduct = productService.deleteProduct(id);
+	    if (deleteProduct) {
+	        session.setAttribute("succMsg", "Product delete success");
+	        adminLogService.logAction(admin.getEmail(), admin.getName(), 
+	                                "DELETE_PRODUCT", 
+	                                "Deleted product: " + (product != null ? product.getTitle() : "ID " + id), 
+	                                ipAddress);
+	    } else {
+	        session.setAttribute("errorMsg", "Something wrong on server");
+	        adminLogService.logAction(admin.getEmail(), admin.getName(), 
+	                                "DELETE_PRODUCT_FAILED", 
+	                                "Failed to delete product ID: " + id, 
+	                                ipAddress);
+	    }
+	    return "redirect:/admin/products";
 	}
 
 	@GetMapping("/editProduct/{id}")
@@ -353,19 +503,34 @@ public class AdminController {
 
 	@PostMapping("/updateProduct")
 	public String updateProduct(@ModelAttribute Product product, @RequestParam("file") MultipartFile image,
-			HttpSession session, Model m) {
+	        HttpSession session, Model m, Principal p) {
 
-		if (product.getDiscount() < 0 || product.getDiscount() > 100) {
-			session.setAttribute("errorMsg", "invalid Discount");
-		} else {
-			Product updateProduct = productService.updateProduct(product, image);
-			if (!ObjectUtils.isEmpty(updateProduct)) {
-				session.setAttribute("succMsg", "Product update success");
-			} else {
-				session.setAttribute("errorMsg", "Something wrong on server");
-			}
-		}
-		return "redirect:/admin/editProduct/" + product.getId();
+	    UserDtls admin = commonUtil.getLoggedInUserDetails(p);
+	    String ipAddress = getClientIpAddress(request);
+
+	    if (product.getDiscount() < 0 || product.getDiscount() > 100) {
+	        session.setAttribute("errorMsg", "invalid Discount");
+	        adminLogService.logAction(admin.getEmail(), admin.getName(), 
+	                                "UPDATE_PRODUCT_FAILED", 
+	                                "Failed to update product: " + product.getTitle() + " (invalid discount)", 
+	                                ipAddress);
+	    } else {
+	        Product updateProduct = productService.updateProduct(product, image);
+	        if (!ObjectUtils.isEmpty(updateProduct)) {
+	            session.setAttribute("succMsg", "Product update success");
+	            adminLogService.logAction(admin.getEmail(), admin.getName(), 
+	                                    "UPDATE_PRODUCT", 
+	                                    "Updated product: " + product.getTitle(), 
+	                                    ipAddress);
+	        } else {
+	            session.setAttribute("errorMsg", "Something wrong on server");
+	            adminLogService.logAction(admin.getEmail(), admin.getName(), 
+	                                    "UPDATE_PRODUCT_FAILED", 
+	                                    "Failed to update product: " + product.getTitle() + " (server error)", 
+	                                    ipAddress);
+	        }
+	    }
+	    return "redirect:/admin/editProduct/" + product.getId();
 	}
 
 	@GetMapping("/users")
@@ -382,102 +547,124 @@ public class AdminController {
 	}
 
 	@GetMapping("/updateSts")
-	public String updateUserAccountStatus(@RequestParam Boolean status, @RequestParam Integer id,@RequestParam Integer type, HttpSession session) {
-		Boolean f = userService.updateAccountStatus(id, status);
-		if (f) {
-			session.setAttribute("succMsg", "Account Status Updated");
-		} else {
-			session.setAttribute("errorMsg", "Something wrong on server");
-		}
-		return "redirect:/admin/users?type="+type;
+	public String updateUserAccountStatus(@RequestParam Boolean status, @RequestParam Integer id,
+	        @RequestParam Integer type, HttpSession session, Principal p) {
+	    
+	    UserDtls admin = commonUtil.getLoggedInUserDetails(p);
+	    String ipAddress = getClientIpAddress(request);
+	    UserDtls user = userService.getUserById(id); // Changed from getId to getUserById
+	    
+	    Boolean f = userService.updateAccountStatus(id, status);
+	    if (f) {
+	        session.setAttribute("succMsg", "Account Status Updated");
+	        adminLogService.logAction(admin.getEmail(), admin.getName(), 
+	                                "UPDATE_USER_STATUS", 
+	                                "Updated user status - User: " + (user != null ? user.getEmail() : "ID " + id) + 
+	                                ", Status: " + (status ? "Active" : "Inactive"), 
+	                                ipAddress);
+	    } else {
+	        session.setAttribute("errorMsg", "Something wrong on server");
+	        adminLogService.logAction(admin.getEmail(), admin.getName(), 
+	                                "UPDATE_USER_STATUS_FAILED", 
+	                                "Failed to update user status for ID: " + id, 
+	                                ipAddress);
+	    }
+	    return "redirect:/admin/users?type=" + type;
 	}
+
+
 
 	@GetMapping("/orders")
 	public String getAllOrders(Model m, @RequestParam(name = "pageNo", defaultValue = "0") Integer pageNo,
-			@RequestParam(name = "pageSize", defaultValue = "10") Integer pageSize) {
-//		List<ProductOrder> allOrders = orderService.getAllOrders();
-//		m.addAttribute("orders", allOrders);
-//		m.addAttribute("srch", false);
+	        @RequestParam(name = "pageSize", defaultValue = "10") Integer pageSize) {
+		CsrfToken csrfToken = (CsrfToken) request.getAttribute(CsrfToken.class.getName());
+	    if (csrfToken != null) {
+	        m.addAttribute("_csrf", csrfToken);
+	    }
+	    Page<ProductOrder> page = orderService.getAllOrdersPagination(pageNo, pageSize);
+	    m.addAttribute("orders", page.getContent());
+	    m.addAttribute("srch", false);
 
-		Page<ProductOrder> page = orderService.getAllOrdersPagination(pageNo, pageSize);
-		m.addAttribute("orders", page.getContent());
-		m.addAttribute("srch", false);
+	    m.addAttribute("pageNo", page.getNumber());
+	    m.addAttribute("pageSize", pageSize);
+	    m.addAttribute("totalElements", page.getTotalElements());
+	    m.addAttribute("totalPages", page.getTotalPages());
+	    m.addAttribute("isFirst", page.isFirst());
+	    m.addAttribute("isLast", page.isLast());
 
-		m.addAttribute("pageNo", page.getNumber());
-		m.addAttribute("pageSize", pageSize);
-		m.addAttribute("totalElements", page.getTotalElements());
-		m.addAttribute("totalPages", page.getTotalPages());
-		m.addAttribute("isFirst", page.isFirst());
-		m.addAttribute("isLast", page.isLast());
-
-		return "/admin/orders";
+	    return "admin/orders"; // Remove the leading slash
 	}
+
 
 	@PostMapping("/update-order-status")
-	public String updateOrderStatus(@RequestParam Integer id, @RequestParam Integer st, HttpSession session) {
+	public String updateOrderStatus(@RequestParam Integer id, @RequestParam Integer st, 
+	        HttpSession session, Principal p) {
 
-		OrderStatus[] values = OrderStatus.values();
-		String status = null;
+	    UserDtls admin = commonUtil.getLoggedInUserDetails(p);
+	    String ipAddress = getClientIpAddress(request);
 
-		for (OrderStatus orderSt : values) {
-			if (orderSt.getId().equals(st)) {
-				status = orderSt.getName();
-			}
-		}
+	    OrderStatus[] values = OrderStatus.values();
+	    String status = null;
 
-		ProductOrder updateOrder = orderService.updateOrderStatus(id, status);
+	    for (OrderStatus orderSt : values) {
+	        if (orderSt.getId().equals(st)) {
+	            status = orderSt.getName();
+	        }
+	    }
 
-		try {
-			commonUtil.sendMailForProductOrder(updateOrder, status);
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
+	    ProductOrder updateOrder = orderService.updateOrderStatus(id, status);
 
-		if (!ObjectUtils.isEmpty(updateOrder)) {
-			session.setAttribute("succMsg", "Status Updated");
-		} else {
-			session.setAttribute("errorMsg", "status not updated");
-		}
-		return "redirect:/admin/orders";
+	    try {
+	        commonUtil.sendMailForProductOrder(updateOrder, status);
+	    } catch (Exception e) {
+	        e.printStackTrace();
+	    }
+
+	    if (!ObjectUtils.isEmpty(updateOrder)) {
+	        session.setAttribute("succMsg", "Status Updated");
+	        adminLogService.logAction(admin.getEmail(), admin.getName(), 
+	                                "UPDATE_ORDER_STATUS", 
+	                                "Updated order status - Order ID: " + id + ", Status: " + status, 
+	                                ipAddress);
+	    } else {
+	        session.setAttribute("errorMsg", "status not updated");
+	        adminLogService.logAction(admin.getEmail(), admin.getName(), 
+	                                "UPDATE_ORDER_STATUS_FAILED", 
+	                                "Failed to update order status for ID: " + id, 
+	                                ipAddress);
+	    }
+	    return "redirect:/admin/orders";
 	}
-
 	@GetMapping("/search-order")
 	public String searchProduct(@RequestParam String orderId, Model m, HttpSession session,
-			@RequestParam(name = "pageNo", defaultValue = "0") Integer pageNo,
-			@RequestParam(name = "pageSize", defaultValue = "10") Integer pageSize) {
+	        @RequestParam(name = "pageNo", defaultValue = "0") Integer pageNo,
+	        @RequestParam(name = "pageSize", defaultValue = "10") Integer pageSize) {
 
-		if (orderId != null && orderId.length() > 0) {
+	    if (orderId != null && orderId.length() > 0) {
+	        ProductOrder order = orderService.getOrdersByOrderId(orderId.trim());
 
-			ProductOrder order = orderService.getOrdersByOrderId(orderId.trim());
+	        if (ObjectUtils.isEmpty(order)) {
+	            session.setAttribute("errorMsg", "Incorrect orderId");
+	            m.addAttribute("orderDtls", null);
+	        } else {
+	            m.addAttribute("orderDtls", order);
+	        }
+	        m.addAttribute("srch", true);
+	    } else {
+	        Page<ProductOrder> page = orderService.getAllOrdersPagination(pageNo, pageSize);
+	        m.addAttribute("orders", page.getContent()); // Change from page to page.getContent()
+	        m.addAttribute("srch", false);
 
-			if (ObjectUtils.isEmpty(order)) {
-				session.setAttribute("errorMsg", "Incorrect orderId");
-				m.addAttribute("orderDtls", null);
-			} else {
-				m.addAttribute("orderDtls", order);
-			}
-
-			m.addAttribute("srch", true);
-		} else {
-//			List<ProductOrder> allOrders = orderService.getAllOrders();
-//			m.addAttribute("orders", allOrders);
-//			m.addAttribute("srch", false);
-
-			Page<ProductOrder> page = orderService.getAllOrdersPagination(pageNo, pageSize);
-			m.addAttribute("orders", page);
-			m.addAttribute("srch", false);
-
-			m.addAttribute("pageNo", page.getNumber());
-			m.addAttribute("pageSize", pageSize);
-			m.addAttribute("totalElements", page.getTotalElements());
-			m.addAttribute("totalPages", page.getTotalPages());
-			m.addAttribute("isFirst", page.isFirst());
-			m.addAttribute("isLast", page.isLast());
-
-		}
-		return "/admin/orders";
-
+	        m.addAttribute("pageNo", page.getNumber());
+	        m.addAttribute("pageSize", pageSize);
+	        m.addAttribute("totalElements", page.getTotalElements());
+	        m.addAttribute("totalPages", page.getTotalPages());
+	        m.addAttribute("isFirst", page.isFirst());
+	        m.addAttribute("isLast", page.isLast());
+	    }
+	    return "admin/orders"; // Remove the leading slash
 	}
+
 
 	@GetMapping("/add-admin")
 	public String loadAdminAdd() {
@@ -485,29 +672,37 @@ public class AdminController {
 	}
 
 	@PostMapping("/save-admin")
-	public String saveAdmin(@ModelAttribute UserDtls user, @RequestParam("img") MultipartFile file, HttpSession session)
-			throws IOException {
+	public String saveAdmin(@ModelAttribute UserDtls user, @RequestParam("img") MultipartFile file, 
+	        HttpSession session, Principal p) throws IOException {
 
-		String imageName = file.isEmpty() ? "default.jpg" : file.getOriginalFilename();
-		user.setProfileImage(imageName);
-		UserDtls saveUser = userService.saveAdmin(user);
+	    UserDtls admin = commonUtil.getLoggedInUserDetails(p);
+	    String ipAddress = getClientIpAddress(request);
 
-		if (!ObjectUtils.isEmpty(saveUser)) {
-			if (!file.isEmpty()) {
-				File saveFile = new ClassPathResource("static/img").getFile();
+	    String imageName = file.isEmpty() ? "default.jpg" : file.getOriginalFilename();
+	    user.setProfileImage(imageName);
+	    UserDtls saveUser = userService.saveAdmin(user);
 
-				Path path = Paths.get(saveFile.getAbsolutePath() + File.separator + "profile_img" + File.separator
-						+ file.getOriginalFilename());
+	    if (!ObjectUtils.isEmpty(saveUser)) {
+	        if (!file.isEmpty()) {
+	            File saveFile = new ClassPathResource("static/img").getFile();
+	            Path path = Paths.get(saveFile.getAbsolutePath() + File.separator + "profile_img" + File.separator
+	                    + file.getOriginalFilename());
+	            Files.copy(file.getInputStream(), path, StandardCopyOption.REPLACE_EXISTING);
+	        }
+	        session.setAttribute("succMsg", "Register successfully");
+	        adminLogService.logAction(admin.getEmail(), admin.getName(), 
+	                                "CREATE_ADMIN", 
+	                                "Created new admin: " + user.getEmail(), 
+	                                ipAddress);
+	    } else {
+	        session.setAttribute("errorMsg", "something wrong on server");
+	        adminLogService.logAction(admin.getEmail(), admin.getName(), 
+	                                "CREATE_ADMIN_FAILED", 
+	                                "Failed to create admin: " + user.getEmail(), 
+	                                ipAddress);
+	    }
 
-//				System.out.println(path);
-				Files.copy(file.getInputStream(), path, StandardCopyOption.REPLACE_EXISTING);
-			}
-			session.setAttribute("succMsg", "Register successfully");
-		} else {
-			session.setAttribute("errorMsg", "something wrong on server");
-		}
-
-		return "redirect:/admin/add-admin";
+	    return "redirect:/admin/add-admin";
 	}
 
 	@GetMapping("/profile")

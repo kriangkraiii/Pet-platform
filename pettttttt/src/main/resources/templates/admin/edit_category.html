@@ -60,7 +60,14 @@
 								</div>
 								<img th:src="@{'/img/category_img/'+${category.imageName}}"
 									width="100px" height="100px">
-								<button class="btn btn-primary col-md-12 mt-2">Update</button>
+								<div class="row mt-2">
+									<div class="col-md-6">
+										<a href="/admin/category" class="btn btn-secondary col-md-12">Back</a>
+									</div>
+									<div class="col-md-6">
+										<button class="btn btn-primary col-md-12">Update</button>
+									</div>
+								</div>
 							</form>
 						</div>
 					</div>

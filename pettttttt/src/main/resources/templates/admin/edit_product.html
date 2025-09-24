@@ -41,15 +41,17 @@
 								</div>
 								<div class="row">
 									<div class="mb-3 col">
-										<label>Category</label> <select class="form-control"
-											name="category">
-											<option value="">None</option>
-											<option
-												th:selected="${product.category != null and product.category == product.category}"
-												th:text="${product.category}" th:value="${product.category}"></option>
-											
-										</select>
-									</div>
+    <label>Category</label> 
+    <select class="form-control" name="category">
+        <option value="">None</option>
+        <option th:each="cat : ${categories}" 
+                th:selected="${product.category != null and product.category == cat.name}"
+                th:text="${cat.name}" 
+                th:value="${cat.name}">
+        </option>
+    </select>
+</div>
+
 									<div class="mb-3 col">
 										<label>Enter Price</label> <input type="number" name="price"
 											th:value="${product.price}" class="form-control">
@@ -105,7 +107,14 @@
 									</div>
 
 								</div>
-								<button class="btn btn-primary col-md-12">Update</button>
+								<div class="row">
+									<div class="col-md-6">
+										<a href="/admin/products" class="btn btn-secondary col-md-12">Back</a>
+									</div>
+									<div class="col-md-6">
+										<button class="btn btn-primary col-md-12">Update</button>
+									</div>
+								</div>
 							</form>
 						</div>
 					</div>
