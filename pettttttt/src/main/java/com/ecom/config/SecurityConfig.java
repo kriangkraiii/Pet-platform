@@ -50,6 +50,10 @@ public class SecurityConfig {
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
             .csrf(csrf -> csrf.disable())
+            .sessionManagement(session -> session
+                .maximumSessions(1)
+                .maxSessionsPreventsLogin(false)
+            )
             .authorizeHttpRequests(authz -> authz
                 .requestMatchers("/", "/signin", "/register", "/saveUser", "/products/**", "/product/**", 
                                 "/static/**", "/css/**", "/js/**", "/img/**", "/img/profile_img/**",
@@ -72,9 +76,17 @@ public class SecurityConfig {
             .logout(logout -> logout
                 .logoutUrl("/logout")
                 .logoutSuccessUrl("/signin?logout=true")
+                .invalidateHttpSession(true)
+                .clearAuthentication(true)
                 .permitAll()
+            )
+            .exceptionHandling(ex -> ex
+                .authenticationEntryPoint((request, response, authException) -> {
+                    response.sendRedirect("/signin?expired=true");
+                })
             );
         return http.build();
     }
+
 
 }

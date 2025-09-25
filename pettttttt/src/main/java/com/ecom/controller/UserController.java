@@ -56,6 +56,7 @@ public class UserController {
 		return "user/home";
 	}
 
+
 	@ModelAttribute
 	public void getUserDetails(Principal p, Model m) {
 		if (p != null) {
@@ -102,10 +103,14 @@ public class UserController {
 	}
 
 	private UserDtls getLoggedInUserDetails(Principal p) {
-		String email = p.getName();
-		UserDtls userDtls = userService.getUserByEmail(email);
-		return userDtls;
+	    if (p == null) {
+	        return null;
+	    }
+	    String email = p.getName();
+	    UserDtls userDtls = userService.getUserByEmail(email);
+	    return userDtls;
 	}
+
 
 	@GetMapping("/orders")
 	public String orderPage(Principal p, Model m) {

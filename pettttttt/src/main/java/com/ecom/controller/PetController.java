@@ -137,35 +137,46 @@ public class PetController {
 	// Delete pet
 	@PostMapping("/delete/{id}")
 	public String deletePet(@PathVariable("id") int petId, HttpSession session, Principal principal) {
-		if (principal == null) {
-			return "redirect:/login";
-		}
+	    try {
+	        if (principal == null) {
+	            return "redirect:/signin";
+	        }
 
-		String email = principal.getName();
-		UserDtls user = userService.getUserByEmail(email);
+	        String email = principal.getName();
+	        UserDtls user = userService.getUserByEmail(email);
+	        
+	        if (user == null) {
+	            return "redirect:/signin";
+	        }
 
-		Pet pet = petService.getPetById(petId);
-		if (pet == null || !pet.getOwner().getId().equals(user.getId())) {
-			session.setAttribute("errorNotPMsg", "Not found or you don't have permission to delete this pet");
-			return "redirect:/user/pet";
-		}
+	        Pet pet = petService.getPetById(petId);
+	        if (pet == null || !pet.getOwner().getId().equals(user.getId())) {
+	            session.setAttribute("errorNotPMsg", "Pet not found or you don't have permission to delete this pet");
+	            return "redirect:/user/pet";
+	        }
 
-		try {
-			// ลบไฟล์ภาพถ้าไม่ใช่ภาพเริ่มต้น
-			if (pet.getImagePet() != null && !pet.getImagePet().equals("/img/pet_img/default.jpg")) {
-				String imagePath = "src/main/resources/static" + pet.getImagePet();
-				Files.deleteIfExists(Paths.get(imagePath));
-			}
+	        // Delete image file if not default
+	        if (pet.getImagePet() != null && !pet.getImagePet().equals("/img/pet_img/default.jpg")) {
+	            try {
+	                String imagePath = "src/main/resources/static" + pet.getImagePet();
+	                Files.deleteIfExists(Paths.get(imagePath));
+	            } catch (Exception e) {
+	                // Log but don't fail the deletion
+	                System.err.println("Failed to delete image file: " + e.getMessage());
+	            }
+	        }
 
-			petService.deletePet(petId);
-			session.setAttribute("succDPMsg", "Pet deleted successfully!");
-		} catch (IOException e) {
-			e.printStackTrace();
-			session.setAttribute("errorDPMsg", "Pet deleted failed: " + e.getMessage());
-		}
+	        petService.deletePet(petId);
+	        session.setAttribute("succDPMsg", "Pet deleted successfully!");
+	        
+	    } catch (Exception e) {
+	        e.printStackTrace();
+	        session.setAttribute("errorDPMsg", "Pet deletion failed: " + e.getMessage());
+	    }
 
-		return "redirect:/user/pet";
+	    return "redirect:/user/pet";
 	}
+
 
 	// Edit pet - show form
 	@GetMapping("/edit/{id}")
