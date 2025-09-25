@@ -1,19 +1,20 @@
 <!DOCTYPE html>
-<html lang="en" xmlns:th="http://www.thymeleaf.org"
-	th:replace="~{base::layout(~{::section})}">
+<html lang="en" xmlns:th="http://www.thymeleaf.org" th:replace="~{base::layout(~{::section})}">
+
 <head>
-<meta charset="UTF-8">
-<title>Insert title here</title>
+	<meta charset="UTF-8">
+	<title>Insert title here</title>
 </head>
+
 <body>
 	<section>
 		<div class="container p-5">
-						<div class="dashboard-hero text-center">
+			<div class="dashboard-hero text-center">
 				<h1 class="dashboard-title">
 					<i class="fa-solid fa-crown me-3"></i>
 					Admin Dashboard
 				</h1>
-				
+
 			</div>
 			<div class="row p-5">
 				<div class="col-md-4 mt-2">
@@ -98,9 +99,21 @@
 					</a>
 				</div>
 
+				<div class="col-md-4 mt-4">
+					<a href="/admin/pet" class="text-decoration-none">
+						<div class="card card-sh">
+							<div class="card-body text-center text-primary">
+								<i class="fa-solid fa-paw fa-3x"></i>
+								<h4>Pet</h4>
+							</div>
+						</div>
+					</a>
+				</div>
+
 
 			</div>
 		</div>
 	</section>
 </body>
+
 </html>

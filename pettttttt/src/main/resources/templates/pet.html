@@ -3,59 +3,68 @@
 <html lang="en" xmlns:th="http://www.thymeleaf.org" th:replace="~{base::layout(~{::section})}">
 
 <head>
-	<meta charset="ISO-8859-1">
+	<meta charset="UTF-8">
 	<title>My Pets</title>
 </head>
 
 <body>
 	<section>
 		<div class="container profile-card">
-			<div class="container profile-card">
-
-				<!-- Form to add a new pet -->
-				<h3>Add a New Pet</h3>
-				<form th:action="@{/user/pet/add}" method="post"><input type="text" name="name" placeholder="Pet Name"
-						required><input type="text" name="type" placeholder="Pet Type" required><input type="text"
-						name="breed" placeholder="Breed" required><input type="number" name="age" placeholder="Age"
-						required><input type="text" name="color" placeholder="Color" required>
-						<input type="text" name="description" placeholder="Description" required>
-						<input type="file" name="imagePet" placeholder="Image Pet" accept="image/*">
-						<button type="submit"
-						class="btn btn-primary">Add Pet</button>
-					<div th:if="${session.succMsg}" class="alert alert-success" th:text="${session.succMsg}"></div>
-					<div th:if="${session.errorMsg}" class="alert alert-danger" th:text="${session.errorMsg}"></div>
-				</form>
-				<br>
-
-				<!-- Display pets in a table if available -->
-				<h2>My Pets</h2>
-				<div th:if="${noPetsMsg}" class="alert alert-info" th:text="${noPetsMsg}"></div>
-				<table th:if="${pets}" class="table table-striped">
-					<thead>
-						<tr>
-							<th>Name</th>
-							<th>Type</th>
-							<th>Breed</th>
-							<th>Age</th>
-							<th>Color</th>
-							<th>Image</th>
-							<th>Description</th>
-						</tr>
-					</thead>
-					<tbody>
-						<tr th:each="pet : ${pets}">
-							<td th:text="${pet.name}"></td>
-							<td th:text="${pet.type}"></td>
-							<td th:text="${pet.breed}"></td>
-							<td th:text="${pet.age}"></td>
-							<td th:text="${pet.color}"></td>
-							<td><img th:src="@{${pet.imagePet}}" alt="Pet Image" width="100"></td>
-							<td th:text="${pet.description}"></td>
-							
-						</tr>
-					</tbody>
+			<!-- ✅ success / error message -->
+			<div th:if="${session.succAddPetMsg}" class="alert alert-success mt-2" th:text="${session.succAddPetMsg}">
 			</div>
-			</table>
+			<div th:if="${session.errorAddPetMsg}" class="alert alert-danger mt-2" th:text="${session.errorAddPetMsg}">
+			</div>
+
+			<!-- ✅ button to add a new pet -->
+			<div class="justify-content-end mt-3 mb-3">
+				<a href="/user/pet/add" class="btn btn-primary">Add New Pet</a>
+
+			<!--                         -->
+
+
+			<!-- My Pets Section -->
+			<h2>My Pets</h2>
+			<div th:if="${noPetsMsg}" class="alert alert-info" th:text="${noPetsMsg}"></div>
+
+			<div class="row" th:if="${pets}">
+
+				<div class="card-md-4 mb-3" th:each="pet : ${pets}">
+					<div class="card shadow-sm">
+						<div class="row g-0">
+							<!-- Pet image on the left -->
+							<div class="col-md-4">
+								<img th:if="${pet.imagePet}" th:src="@{${pet.imagePet}}" class="img-fluid rounded-start"
+									alt="Pet Image" style="height:100%; object-fit:cover;">
+							</div>
+
+							<!-- Pet details on the right -->
+							<div class="col-md-8">
+								<div class="card-body">
+									<h5 class="card-title" th:text="${pet.name}"></h5>
+									<p class="card-text">
+										<strong>Type:</strong> <span th:text="${pet.type}"></span><br>
+										<strong>Breed:</strong> <span th:text="${pet.breed}"></span><br>
+										<strong>Age:</strong> <span th:text="${pet.age}"></span> years<br>
+										<strong>Color:</strong> <span th:text="${pet.color}"></span><br>
+										<strong>Description:</strong> <span th:text="${pet.description}"></span>
+									</p>
+									<!-- Buttons -->
+									<div class="d-flex justify-content-between">
+										<a th:href="@{'/user/pet/edit/' + ${pet.id}}"
+											style="text-decoration: underline;">Edit</a>
+
+										<form th:action="@{'/user/pet/delete/' + ${pet.id}}" method="post">
+											<button type="submit" style="text-decoration: underline;"
+												onclick="return confirm('Are you sure you want to delete this pet?')">Delete</button>
+										</form>
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
 
 
 		</div>

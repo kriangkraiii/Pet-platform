@@ -7,6 +7,8 @@ import org.springframework.web.multipart.MultipartFile;
 import com.ecom.model.UserDtls;
 
 public interface UserService {
+	
+	public UserDtls getUserById(Integer id);
 
 	public UserDtls saveUser(UserDtls user);
 

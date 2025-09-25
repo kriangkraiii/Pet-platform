@@ -30,12 +30,14 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import com.ecom.model.AdminLog;
 import com.ecom.model.Category;
+import com.ecom.model.Pet;
 import com.ecom.model.Product;
 import com.ecom.model.ProductOrder;
 import com.ecom.model.UserDtls;
 import com.ecom.service.CartService;
 import com.ecom.service.CategoryService;
 import com.ecom.service.OrderService;
+import com.ecom.service.PetService;
 import com.ecom.service.ProductService;
 import com.ecom.service.UserService;
 import com.ecom.util.CommonUtil;
@@ -453,7 +455,11 @@ public class AdminController {
 	    List<Product> products = page.getContent();
 	    long activeProductsCount = products.stream().filter(Product::getIsActive).count();
 
-	    long lowStockCount = products.stream().filter(p -> p.getStock() != null && p.getStock().intValue() < 10).count();
+
+long lowStockCount = products.stream()
+    .filter(p -> p.getStock() < 10)
+    .count();
+
 
 	    // Add attributes for the view
 	    m.addAttribute("products", products);
@@ -743,5 +749,7 @@ public class AdminController {
 
 		return "redirect:/admin/profile";
 	}
+	
+	
 
 }

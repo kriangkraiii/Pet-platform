@@ -25,6 +25,12 @@ import com.ecom.util.AppConstant;
 @Service
 @Transactional
 public class UserServiceImpl implements UserService {
+	
+	@Override
+	public UserDtls getUserById(Integer id)
+	{
+		return userRepository.findById(id).orElse(null);
+	}
 
 	@Autowired
 	private UserRepository userRepository;

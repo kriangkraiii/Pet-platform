@@ -44,13 +44,16 @@ public class PetServiceImpl implements PetService {
 		return petRepository.findById(id).orElse(null);
 	}
 
-	@Override
-	public void updatePet(Pet pet) {
-		petRepository.save(pet); // save จะทำงานเป็น update ถ้า ID มีอยู่แล้ว
-	}
+	
 
 	@Override
 	public void deletePet(int id) {
 	    petRepository.deleteById(id);
+	}
+
+	@Override
+	public void updatePet(Pet pet) {
+		        petRepository.save(pet);
+		
 	}
 }

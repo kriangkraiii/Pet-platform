@@ -70,8 +70,16 @@
 					<li class="nav-item"><a class="nav-link active" aria-current="page" href="/products">Product</a>
 					</li>
 
-					<li class="nav-item"><a class="nav-link active" aria-current="page" href="/user/pet"><i
-								class="fa-solid fa-paw"></i> My Pets</a></li>
+
+					<!-- addmin no see button-->
+					<th:block th:if="${user!=null and user.role!='ROLE_ADMIN'}">
+						<li class="nav-item">
+							<a class="nav-link active" aria-current="page" href="/user/pet">
+								<i class="fa-solid fa-paw"></i> My Pets
+							</a>
+						</li>
+					</th:block>
+
 
 
 				</ul>

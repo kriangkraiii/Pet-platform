@@ -16,4 +16,6 @@ public interface PetService {
 	public void updatePet(Pet pet);
 
 	public void deletePet(int id);
+
+	
 }

@@ -1,0 +1,57 @@
+<!--admin pet.html-->
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org" th:replace="~{base::layout(~{::section})}">
+	<head>
+		<meta charset="UTF-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+		<title>Admin - Pet Management</title>
+		<link rel="stylesheet" th:href="@{/css/admin.css}">
+		<script th:src="@{/js/admin.js}" defer></script>
+		</head>
+		<body>
+			<header>
+				<h1>Pet Management</h1>
+				<nav>
+					<a th:href="@{/admin/dashboard}">Dashboard</a>
+					<a th:href="@{/admin/users}">Users</a>
+					<a th:href="@{/admin/pets}">Pets</a>
+					<a th:href="@{/logout}">Logout</a>
+				</nav>
+				</header>
+				<main>
+					<section>
+						<h2>All Pets</h2>
+						<table>
+							<thead>
+								<tr>
+									<th>ID</th>
+									<th>Name</th>
+									<th>Type</th>
+									<th>Age</th>
+									<th>Owner</th>
+									<th>Actions</th>
+								</tr>
+							</thead>
+							<tbody>
+								<tr th:each="pet : ${pets}">
+									<td th:text="${pet.id}">1</td>
+									<td th:text="${pet.name}">Buddy</td>
+									<td th:text="${pet.type}">Dog</td>
+									<td th:text="${pet.age}">3</td>
+									<td th:text="${pet.owner.username}">john_doe</td>
+									<td>
+										<a th:href="@{|/admin/pets/edit/${pet.id}|}">Edit</a>
+										<a th:href="@{|/admin/pets/delete/${pet.id}|}" onclick="return confirm('Are you sure?')">Delete</a>
+									</td>
+								</tr>
+							</tbody>
+						</table>
+						<a th:href="@{/admin/pets/add}" class="button">Add New Pet</a>
+					</section>
+					</main>
+					<footer>
+						<p>&copy; 2024 Pet Management System</p>
+						</footer>
+						</body>
+						</html>
+						<!-- End of admin pet.html -->
