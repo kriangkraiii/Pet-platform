@@ -17,5 +17,5 @@ public interface PetService {
 
 	public void deletePet(int id);
 
-	
+	public List<Pet> getAllPets();
 }
