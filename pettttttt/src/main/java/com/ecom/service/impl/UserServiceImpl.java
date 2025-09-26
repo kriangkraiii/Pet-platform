@@ -5,6 +5,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;
@@ -25,18 +26,39 @@ import com.ecom.util.AppConstant;
 @Service
 @Transactional
 public class UserServiceImpl implements UserService {
-	
-	@Override
-	public UserDtls getUserById(Integer id)
-	{
-		return userRepository.findById(id).orElse(null);
-	}
 
 	@Autowired
 	private UserRepository userRepository;
 
 	@Autowired
 	private PasswordEncoder passwordEncoder;
+
+	@Override
+	public Integer getUsersCount() {
+	    return (int) userRepository.count();
+	}
+
+	@Override
+	public Integer getNewUsersToday() {
+	    Date today = new Date();
+	    Calendar cal = Calendar.getInstance();
+	    cal.setTime(today);
+	    cal.set(Calendar.HOUR_OF_DAY, 0);
+	    cal.set(Calendar.MINUTE, 0);
+	    cal.set(Calendar.SECOND, 0);
+	    cal.set(Calendar.MILLISECOND, 0);
+	    Date startOfDay = cal.getTime();
+	    
+	    cal.add(Calendar.DAY_OF_MONTH, 1);
+	    Date startOfNextDay = cal.getTime();
+	    
+	    return userRepository.countByCreatedDateBetween(startOfDay, startOfNextDay);
+	}
+
+	@Override
+	public List<UserDtls> getRecentUsers(int limit) {
+	    return userRepository.findTop5ByOrderByCreatedDateDesc();
+	}
 
 	@Override
 	public UserDtls saveUser(UserDtls user) {
@@ -49,6 +71,11 @@ public class UserServiceImpl implements UserService {
 		user.setPassword(encodePassword);
 		UserDtls saveUser = userRepository.save(user);
 		return saveUser;
+	}
+	@Override
+	public UserDtls getUserById(Integer id) {
+	    Optional<UserDtls> user = userRepository.findById(id);
+	    return user.orElse(null);
 	}
 
 	@Override

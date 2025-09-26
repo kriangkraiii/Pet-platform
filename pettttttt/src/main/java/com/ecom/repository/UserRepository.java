@@ -1,5 +1,6 @@
 package com.ecom.repository;
 
+import java.util.Date;
 import java.util.List;
 
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -15,4 +16,7 @@ public interface UserRepository extends JpaRepository<UserDtls, Integer> {
 	public UserDtls findByResetToken(String token);
 
 	public Boolean existsByEmail(String email);
+	Integer countByCreatedDateBetween(Date startDate, Date endDate);
+	List<UserDtls> findTop5ByOrderByCreatedDateDesc();
+
 }

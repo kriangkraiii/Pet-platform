@@ -7,8 +7,6 @@ import org.springframework.web.multipart.MultipartFile;
 import com.ecom.model.UserDtls;
 
 public interface UserService {
-	
-	public UserDtls getUserById(Integer id);
 
 	public UserDtls saveUser(UserDtls user);
 
@@ -37,5 +35,9 @@ public interface UserService {
 	public UserDtls saveAdmin(UserDtls user);
 
 	public Boolean existsEmail(String email);
+	public UserDtls getUserById(Integer id);
+public Integer getNewUsersToday();
+public List<UserDtls> getRecentUsers(int limit);
 
+public Integer getUsersCount();
 }

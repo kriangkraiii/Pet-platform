@@ -1,6 +1,8 @@
 package com.ecom.service.impl;
 
 import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -128,6 +130,11 @@ public class OrderServiceImpl implements OrderService {
 		List<ProductOrder> orders = orderRepository.findByUserId(userId);
 		return orders;
 	}
+	@Override
+	public List<ProductOrder> getOrdersByProduct(Integer productId) {
+	    return orderRepository.findByProductId(productId);
+	}
+
 
 	@Override
 	public ProductOrder updateOrderStatus(Integer id, String status) {
@@ -139,6 +146,83 @@ public class OrderServiceImpl implements OrderService {
 			return updateOrder;
 		}
 		return null;
+	}
+	@Override
+	public Double getTotalRevenue() {
+	    List<ProductOrder> orders = orderRepository.findAll();
+	    return orders.stream()
+	            .filter(order -> !"Cancelled".equals(order.getStatus()))
+	            .mapToDouble(order -> order.getPrice() * order.getQuantity())
+	            .sum();
+	}
+
+	@Override
+	public Double getTodayRevenue() {
+	    LocalDate today = LocalDate.now();
+	    List<ProductOrder> todayOrders = orderRepository.findByOrderDate(today);
+	    return todayOrders.stream()
+	            .filter(order -> !"Cancelled".equals(order.getStatus()))
+	            .mapToDouble(order -> order.getPrice() * order.getQuantity())
+	            .sum();
+	}
+
+	@Override
+	public Integer getTodayOrdersCount() {
+	    LocalDate today = LocalDate.now();
+	    return orderRepository.findByOrderDate(today).size();
+	}
+
+	@Override
+	public Integer getCountOrders() {
+	    return (int) orderRepository.count();
+	}
+
+	@Override
+	public List<Double> getDailyRevenueData(int days) {
+	    List<Double> revenueData = new ArrayList<>();
+	    LocalDate endDate = LocalDate.now();
+	    
+	    for (int i = days - 1; i >= 0; i--) {
+	        LocalDate date = endDate.minusDays(i);
+	        List<ProductOrder> dayOrders = orderRepository.findByOrderDate(date);
+	        Double dayRevenue = dayOrders.stream()
+	                .filter(order -> !"Cancelled".equals(order.getStatus()))
+	                .mapToDouble(order -> order.getPrice() * order.getQuantity())
+	                .sum();
+	        revenueData.add(dayRevenue);
+	    }
+	    return revenueData;
+	}
+
+	@Override
+	public List<String> getDailyRevenueLabels(int days) {
+	    List<String> labels = new ArrayList<>();
+	    LocalDate endDate = LocalDate.now();
+	    DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM");
+	    
+	    for (int i = days - 1; i >= 0; i--) {
+	        LocalDate date = endDate.minusDays(i);
+	        labels.add(date.format(formatter));
+	    }
+	    return labels;
+	}
+
+	@Override
+	public List<Integer> getDailyOrdersData(int days) {
+	    List<Integer> ordersData = new ArrayList<>();
+	    LocalDate endDate = LocalDate.now();
+	    
+	    for (int i = days - 1; i >= 0; i--) {
+	        LocalDate date = endDate.minusDays(i);
+	        List<ProductOrder> dayOrders = orderRepository.findByOrderDate(date);
+	        ordersData.add(dayOrders.size());
+	    }
+	    return ordersData;
+	}
+
+	@Override
+	public List<String> getDailyOrdersLabels(int days) {
+	    return getDailyRevenueLabels(days); // Same format
 	}
 
 	@Override

@@ -8,7 +8,14 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.security.Principal;
+import java.time.LocalDate;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ClassPathResource;
@@ -30,14 +37,12 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import com.ecom.model.AdminLog;
 import com.ecom.model.Category;
-import com.ecom.model.Pet;
 import com.ecom.model.Product;
 import com.ecom.model.ProductOrder;
 import com.ecom.model.UserDtls;
 import com.ecom.service.CartService;
 import com.ecom.service.CategoryService;
 import com.ecom.service.OrderService;
-import com.ecom.service.PetService;
 import com.ecom.service.ProductService;
 import com.ecom.service.UserService;
 import com.ecom.util.CommonUtil;
@@ -262,10 +267,10 @@ public class AdminController {
 		m.addAttribute("categorys", allActiveCategory);
 	}
 
-	@GetMapping("/")
-	public String index() {
-		return "admin/index";
-	}
+//	@GetMapping("/")
+//	public String index() {
+//		return "admin/index";
+//	}
 
 	@GetMapping("/loadAddProduct")
 	public String loadAddProduct(Model m) {
@@ -454,15 +459,18 @@ public class AdminController {
 	    // Calculate statistics efficiently
 	    List<Product> products = page.getContent();
 	    long activeProductsCount = products.stream().filter(Product::getIsActive).count();
+	    long lowStockCount = products.stream().filter(p -> p.getStock() != null && p.getStock().intValue() < 10).count();
 
-
-long lowStockCount = products.stream()
-    .filter(p -> p.getStock() < 10)
-    .count();
-
+	    // Check if each product has orders and create a map for the template
+	    Map<Integer, Boolean> productOrdersMap = new HashMap<>();
+	    for (Product product : products) {
+	        List<ProductOrder> orders = orderService.getOrdersByProduct(product.getId());
+	        productOrdersMap.put(product.getId(), !orders.isEmpty());
+	    }
 
 	    // Add attributes for the view
 	    m.addAttribute("products", products);
+	    m.addAttribute("productOrdersMap", productOrdersMap);
 	    m.addAttribute("activeProductsCount", activeProductsCount);
 	    m.addAttribute("lowStockCount", lowStockCount);
 	    m.addAttribute("pageNo", page.getNumber());
@@ -474,6 +482,7 @@ long lowStockCount = products.stream()
 
 	    return "admin/products";
 	}
+
 
 
 
@@ -749,7 +758,83 @@ long lowStockCount = products.stream()
 
 		return "redirect:/admin/profile";
 	}
-	
-	
+	@GetMapping("/")
+	public String index(Model m) {
+	    try {
+	        // Dashboard metrics - using existing methods or providing alternatives
+	        List<UserDtls> allUsers = userService.getUsers("ROLE_USER");
+	        m.addAttribute("totalUsers", allUsers.size());
+	        
+	        // Get all products count (you'll need to implement this or use existing method)
+	        m.addAttribute("totalProduct", productService.getAllProducts().size());
+	        m.addAttribute("totalOrders", orderService.getCountOrders());
+	        
+	        // Get all categories count
+	        m.addAttribute("totalCategory", categoryService.getAllActiveCategory().size());
+	        
+	        // Revenue metrics using existing methods
+	        Double totalRevenue = orderService.getTotalRevenue();
+	        Double todayRevenue = orderService.getTodayRevenue();
+	        
+	        m.addAttribute("totalRevenue", "฿" + (totalRevenue != null ? String.format("%.2f", totalRevenue) : "0.00"));
+	        m.addAttribute("todayRevenue", "฿" + (todayRevenue != null ? String.format("%.2f", todayRevenue) : "0.00"));
+	        m.addAttribute("todayOrders", orderService.getTodayOrdersCount());
+	        m.addAttribute("newUsersToday", userService.getNewUsersToday());
+	        
+	        // Recent users using existing method
+	        List<UserDtls> recentUsers = userService.getRecentUsers(5);
+	        m.addAttribute("recentUsers", recentUsers);
+	        
+	        // Chart data using existing methods
+	        m.addAttribute("dailyRevenueData", orderService.getDailyRevenueData(7));
+	        m.addAttribute("dailyRevenueLabels", orderService.getDailyRevenueLabels(7));
+	        m.addAttribute("dailyOrdersData", orderService.getDailyOrdersData(7));
+	        m.addAttribute("dailyOrdersLabels", orderService.getDailyOrdersLabels(7));
+	        
+	        // For now, provide empty lists for top categories and products
+	        // You can implement these methods later
+	        m.addAttribute("topCategoriesData", new ArrayList<>());
+	        m.addAttribute("topCategoriesLabels", new ArrayList<>());
+	        m.addAttribute("topProductsData", new ArrayList<>());
+	        m.addAttribute("topProductsLabels", new ArrayList<>());
+	        
+	        
+	        // Add chart data
+	        m.addAttribute("dailyRevenueData", orderService.getDailyRevenueData(7));
+	        m.addAttribute("dailyRevenueLabels", orderService.getDailyRevenueLabels(7));
+	        m.addAttribute("dailyOrdersData", orderService.getDailyOrdersData(7));
+	        m.addAttribute("dailyOrdersLabels", orderService.getDailyOrdersLabels(7));
+	        m.addAttribute("topCategoriesData", categoryService.getTopCategoriesData());
+	        m.addAttribute("topCategoriesLabels", categoryService.getTopCategoriesLabels());
+	        m.addAttribute("topProductsData", productService.getTopProductsData());
+	        m.addAttribute("topProductsLabels", productService.getTopProductsLabels());
+	        
+	        
+	    } catch (Exception e) {
+	        e.printStackTrace();
+	        // Set default values in case of error
+	        m.addAttribute("totalUsers", 0);
+	        m.addAttribute("totalProduct", 0);
+	        m.addAttribute("totalOrders", 0);
+	        m.addAttribute("totalCategory", 0);
+	        m.addAttribute("totalRevenue", "฿0.00");
+	        m.addAttribute("todayRevenue", "฿0.00");
+	        m.addAttribute("todayOrders", 0);
+	        m.addAttribute("newUsersToday", 0);
+	        m.addAttribute("recentUsers", new ArrayList<>());
+	        m.addAttribute("dailyRevenueData", new ArrayList<>());
+	        m.addAttribute("dailyRevenueLabels", new ArrayList<>());
+	        m.addAttribute("dailyOrdersData", new ArrayList<>());
+	        m.addAttribute("dailyOrdersLabels", new ArrayList<>());
+	        m.addAttribute("topCategoriesData", new ArrayList<>());
+	        m.addAttribute("topCategoriesLabels", new ArrayList<>());
+	        m.addAttribute("topProductsData", new ArrayList<>());
+	        m.addAttribute("topProductsLabels", new ArrayList<>());
+	    }
+	    
+	    return "/admin/index";
+	}
+
+
 
 }

@@ -186,12 +186,25 @@
 												class="btn btn-sm btn-outline-primary"
 												data-bs-toggle="tooltip" title="Edit"> <i
 												class="fa-solid fa-pen-to-square"></i>
-											</a> <a th:href="@{'/admin/deleteProduct/'+${p.id}}"
-												class="btn btn-sm btn-outline-danger"
-												data-bs-toggle="tooltip" title="Delete"
-												onclick="return confirm('Are you sure you want to delete this product?')">
-												<i class="fa-solid fa-trash"></i>
 											</a>
+											<!-- Check if product has orders -->
+											<th:block th:if="${productOrdersMap[p.id]}">
+												<button class="btn btn-sm btn-outline-danger" disabled
+													data-bs-toggle="tooltip"
+													title="Cannot delete - Product has orders"
+													onclick="alert('Cannot delete this product as it has associated orders.')">
+													<i class="fa-solid fa-trash"></i>
+												</button>
+											</th:block>
+											<!-- If no orders, allow deletion -->
+											<th:block th:unless="${productOrdersMap[p.id]}">
+												<a th:href="@{'/admin/deleteProduct/'+${p.id}}"
+													class="btn btn-sm btn-outline-danger"
+													data-bs-toggle="tooltip" title="Delete"
+													onclick="return confirm('Are you sure you want to delete this product?')">
+													<i class="fa-solid fa-trash"></i>
+												</a>
+											</th:block>
 										</div>
 									</td>
 								</tr>
@@ -246,9 +259,6 @@
 						</nav>
 					</div>
 				</div>
-
-
-
 			</div>
 		</div>
 	</section>

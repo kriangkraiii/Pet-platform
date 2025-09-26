@@ -1,5 +1,6 @@
 package com.ecom.service.impl;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -61,6 +62,22 @@ public class CategoryServiceImpl implements CategoryService {
 	public Page<Category> getAllCategorPagination(Integer pageNo, Integer pageSize) {
 		Pageable pageable = PageRequest.of(pageNo, pageSize);
 		return categoryRepository.findAll(pageable);
+	}
+	@Override
+	public Integer getCountActiveCategory() {
+	    return getAllActiveCategory().size();
+	}
+
+	@Override
+	public List<Integer> getTopCategoriesData() {
+	    // Return empty list for now - you can implement category usage statistics later
+	    return new ArrayList<>();
+	}
+
+	@Override
+	public List<String> getTopCategoriesLabels() {
+	    // Return empty list for now - you can implement category labels later
+	    return new ArrayList<>();
 	}
 
 }

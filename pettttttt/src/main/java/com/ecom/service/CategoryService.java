@@ -23,4 +23,9 @@ public interface CategoryService {
 
 	public Page<Category> getAllCategorPagination(Integer pageNo,Integer pageSize);
 
+
+	public Integer getCountActiveCategory();
+	public List<Integer> getTopCategoriesData();
+	public List<String> getTopCategoriesLabels();
+
 }

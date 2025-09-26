@@ -11,6 +11,15 @@
 			style="margin-top: 70px; margin-bottom: 100px">
 
 			<div class="col-md-12 p-5">
+				<!-- Back Button -->
+				<div class="row mb-3">
+					<div class="col-md-12">
+						<button onclick="history.back()" class="btn btn-outline-primary">
+							<i class="fas fa-arrow-left"></i> Back
+						</button>
+					</div>
+				</div>
+
 				<div class="row">
 					<th:block th:if="${session.succMsg}">
 						<p class="text-success alert alert-success text-center"

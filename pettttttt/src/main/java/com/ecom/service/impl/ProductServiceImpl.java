@@ -5,6 +5,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -30,6 +31,9 @@ public class ProductServiceImpl implements ProductService {
 	@Autowired
 	private ProductRepository productRepository;
 
+	@Autowired
+	private CartService cartService;
+
 	@Override
 	public Product saveProduct(Product product) {
 		return productRepository.save(product);
@@ -45,8 +49,22 @@ public class ProductServiceImpl implements ProductService {
 		Pageable pageable = PageRequest.of(pageNo, pageSize);
 		return productRepository.findAll(pageable);
 	}
-	@Autowired
-	private CartService cartService;
+	@Override
+	public Long getCountActiveProducts() {
+	    return getTotalActiveProductsCount();
+	}
+
+	@Override
+	public List<Integer> getTopProductsData() {
+	    // Return empty list for now - you can implement product sales statistics later
+	    return new ArrayList<>();
+	}
+
+	@Override
+	public List<String> getTopProductsLabels() {
+	    // Return empty list for now - you can implement product labels later
+	    return new ArrayList<>();
+	}
 
 	@Override
 	@Transactional
@@ -69,9 +87,6 @@ public class ProductServiceImpl implements ProductService {
 	        return false;
 	    }
 	}
-
-
-
 
 	@Override
 	public Product getProductById(Integer id) {
@@ -168,12 +183,16 @@ public class ProductServiceImpl implements ProductService {
 		pageProduct = productRepository.findByisActiveTrueAndTitleContainingIgnoreCaseOrCategoryContainingIgnoreCase(ch,
 				ch, pageable);
 
-//		if (ObjectUtils.isEmpty(category)) {
-//			pageProduct = productRepository.findByIsActiveTrue(pageable);
-//		} else {
-//			pageProduct = productRepository.findByCategory(pageable, category);
-//		}
 		return pageProduct;
 	}
 
+	@Override
+	public Long getTotalActiveProductsCount() {
+		return productRepository.countByIsActiveTrue();
+	}
+
+	@Override
+	public Long getTotalLowStockProductsCount() {
+		return productRepository.countByStockLessThan(10);
+	}
 }

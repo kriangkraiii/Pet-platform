@@ -30,5 +30,13 @@ public interface ProductService {
 	public Page<Product> getAllProductsPagination(Integer pageNo, Integer pageSize);
 
 	public Page<Product> searchActiveProductPagination(Integer pageNo, Integer pageSize, String category, String ch);
+    public Long getTotalActiveProductsCount();
+    public Long getTotalLowStockProductsCount();
+  
+
+
+    public Long getCountActiveProducts();
+    public List<Integer> getTopProductsData();
+    public List<String> getTopProductsLabels();
 
 }
