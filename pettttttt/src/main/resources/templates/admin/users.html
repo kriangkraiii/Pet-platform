@@ -60,7 +60,8 @@
 									th:href="@{'/admin/updateSts?status=true&id='+${u.id}}+'&type='+${userType}"
 									class="btn btn-sm btn-primary">Active</a> <a
 									th:href="@{'/admin/updateSts?status=false&id='+${u.id}}+'&type='+${userType}"
-									class="btn btn-sm btn-danger"> Inactive</a></td>
+									class="btn btn-sm btn-danger"
+									onclick="return confirm('Are you sure you want to deactivate this user account?')"> Inactive</a></td>
 							</tr>
 
 						</tbody>
