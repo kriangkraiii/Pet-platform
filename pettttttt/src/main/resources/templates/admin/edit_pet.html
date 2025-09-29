@@ -15,121 +15,87 @@
 				<h3>Edit Pet</h3>
 				<form th:action="@{'/admin/pet/edit/' + ${pet.id}}" method="post" enctype="multipart/form-data">
 					<div class="row mb-2">
-					    <div class="col">
-					        <label for="name" class="form-label">Pet Name</label>
-					        <input type="text" class="form-control" id="name" name="name" th:value="${pet.name}" required>
-					    </div>
-					    <div class="col">
-					        <label for="type" class="form-label">Pet Type</label>
-					        <input type="text" class="form-control" id="type" name="type" th:value="${pet.type}" required>
-					    </div>
-					</div>
-					
-					<div class="col position-relative">
-					    <label for="ownerName" class="form-label">Owner</label>
-					    <input type="text" class="form-control" id="ownerName" name="ownerName"
-					           th:value="${pet.owner.name}" placeholder="Type owner name..." autocomplete="off" required>
-					    <input type="hidden" id="ownerId" name="owner.id" th:value="${pet.owner.id}">
-					    <ul id="ownerSuggestions" class="list-group mt-1 position-absolute w-100" style="z-index: 1000;"></ul>
+						<div class="col">
+							<label for="name" class="form-label">Pet Name</label>
+							<input type="text" class="form-control" id="name" name="name" th:value="${pet.name}"
+								required>
+						</div>
+						<div class="col">
+							<label for="type" class="form-label">Pet Type</label>
+							<input type="text" class="form-control" id="type" name="type" th:value="${pet.type}"
+								required>
+						</div>
 					</div>
 
 					<div class="row mb-2">
-					    <div class="col">
-					        <label for="breed" class="form-label">Breed</label>
-					        <input type="text" class="form-control" id="breed" name="breed" th:value="${pet.breed}" required>
-					    </div>
-					    <div class="col">
-					        <label for="age" class="form-label">Age</label>
-					        <input type="number" class="form-control" id="age" name="age" th:value="${pet.age}" required>
-					    </div>
-					</div>
+						<div class="col"><label for="ownerId" class="form-label">Owner Email</label><select
+								class="form-control" id="ownerId" name="owner.id" required>
+								<option th:each="owner : ${owners}" th:value="${owner.id}" th:text="${owner.email}"
+									th:selected="${owner.id} == ${pet.owner.id}"></option>
+							</select></div>
 
-					<div class="row mb-2">
-					    <div class="col">
-					        <label for="color" class="form-label">Color</label>
-					        <input type="text" class="form-control" id="color" name="color" th:value="${pet.color}" required>
-					    </div>
-					    <div class="col">
-					        <label for="description" class="form-label">Description</label>
-					        <input type="text" class="form-control" id="description" name="description" th:value="${pet.description}" required>
-					    </div>
-					</div>
+						<div class="row mb-2">
+							<div class="col">
+								<label for="breed" class="form-label">Breed</label>
+								<input type="text" class="form-control" id="breed" name="breed" th:value="${pet.breed}"
+									required>
+							</div>
+							<div class="col">
+								<label for="age" class="form-label">Age</label>
+								<input type="number" class="form-control" id="age" name="age" th:value="${pet.age}"
+									required>
+							</div>
+						</div>
 
-					<div class="mb-2">
-					    <label for="imagePet" class="form-label">Upload New Image</label>
-					    <input type="file" class="form-control" id="imagePet" name="imagePet" accept="image/*" onchange="previewImage(event)">
+						<div class="row mb-2">
+							<div class="col">
+								<label for="color" class="form-label">Color</label>
+								<input type="text" class="form-control" id="color" name="color" th:value="${pet.color}"
+									required>
+							</div>
+							<div class="col">
+								<label for="description" class="form-label">Description</label>
+								<input type="text" class="form-control" id="description" name="description"
+									th:value="${pet.description}" required>
+							</div>
+						</div>
 
-					    <!-- แสดงภาพเดิม -->
-					    <img id="preview"
-					         th:src="@{${pet.imagePet}}"
-					         alt="Current Pet Image"
-					         class="mt-2"
-					         style="width: 150px; height: 150px; object-fit: cover;">
-					</div>
+						<div class="mb-2">
+							<label for="imagePet" class="form-label">Upload New Image</label>
+							<input type="file" class="form-control" id="imagePet" name="imagePet" accept="image/*"
+								onchange="previewImage(event)">
 
-					<button type="submit" class="btn btn-primary">Update Pet</button>
-					<a th:href="@{/admin/pet}" class="btn btn-secondary ms-2">Cancel</a>
-					<!-- ✅ success / error message -->
-					<div th:if="${session.succMsg}" class="alert alert-success mt-2" th:text="${session.succMsg}"></div>
-					<div th:if="${session.errorMsg}" class="alert alert-danger mt-2" th:text="${session.errorMsg}">
-					</div>
+							<!-- แสดงภาพเดิม -->
+							<img id="preview" th:src="@{${pet.imagePet}}" alt="Current Pet Image" class="mt-2"
+								style="width: 150px; height: 150px; object-fit: cover;">
+						</div>
+
+						<button type="submit" class="btn btn-primary">Update Pet</button>
+						<a th:href="@{/admin/pet}" class="btn btn-secondary ms-2">Cancel</a>
+						<!-- ✅ success / error message -->
+						<div th:if="${session.succMsg}" class="alert alert-success mt-2" th:text="${session.succMsg}">
+						</div>
+						<div th:if="${session.errorMsg}" class="alert alert-danger mt-2" th:text="${session.errorMsg}">
+						</div>
 				</form>
-				
+
 				<script>
-				    function previewImage(event) {
-				        const input = event.target;
-				        const preview = document.getElementById('preview');
+					function previewImage(event) {
+						const input = event.target;
+						const preview = document.getElementById('preview');
 
-				        if (input.files && input.files[0]) {
-				            const reader = new FileReader();
+						if (input.files && input.files[0]) {
+							const reader = new FileReader();
 
-				            reader.onload = function(e) {
-				                preview.src = e.target.result; // เปลี่ยน src ของภาพให้เป็นภาพใหม่
-				            };
+							reader.onload = function (e) {
+								preview.src = e.target.result; // เปลี่ยน src ของภาพให้เป็นภาพใหม่
+							};
 
-				            reader.readAsDataURL(input.files[0]);
-				        }
-				    }
+							reader.readAsDataURL(input.files[0]);
+						}
+					}
 				</script>
-				<script>
-				document.addEventListener('DOMContentLoaded', function () {
-				    const ownerInput = document.getElementById('ownerName');
-				    const ownerIdInput = document.getElementById('ownerId');
-				    const suggestionsBox = document.getElementById('ownerSuggestions');
 
-				    ownerInput.addEventListener('input', function () {
-				        const query = ownerInput.value;
-				        if (query.length < 2) {
-				            suggestionsBox.innerHTML = '';
-				            return;
-				        }
-
-				        fetch(`/api/owners?query=${encodeURIComponent(query)}`)
-				            .then(response => response.json())
-				            .then(data => {
-				                suggestionsBox.innerHTML = '';
-				                data.forEach(owner => {
-				                    const item = document.createElement('li');
-				                    item.className = 'list-group-item list-group-item-action';
-				                    item.textContent = owner.name;
-				                    item.addEventListener('click', function () {
-				                        ownerInput.value = owner.name;
-				                        ownerIdInput.value = owner.id;
-				                        suggestionsBox.innerHTML = '';
-				                    });
-				                    suggestionsBox.appendChild(item);
-				                });
-				            });
-				    });
-
-				    document.addEventListener('click', function (e) {
-				        if (!suggestionsBox.contains(e.target) && e.target !== ownerInput) {
-				            suggestionsBox.innerHTML = '';
-				        }
-				    });
-				});
-				</script>
-				
 			</div>
 		</div>
 	</section>
