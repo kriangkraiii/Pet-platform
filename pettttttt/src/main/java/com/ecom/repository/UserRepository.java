@@ -15,4 +15,5 @@ public interface UserRepository extends JpaRepository<UserDtls, Integer> {
 	public UserDtls findByResetToken(String token);
 
 	public Boolean existsByEmail(String email);
+
 }

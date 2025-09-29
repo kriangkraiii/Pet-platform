@@ -1,7 +1,5 @@
 package com.ecom.controller;
 
-import com.ecom.service.AdminLogService;
-import jakarta.servlet.http.HttpServletRequest;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -11,6 +9,7 @@ import java.nio.file.StandardCopyOption;
 import java.security.Principal;
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ClassPathResource;
@@ -28,7 +27,6 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.multipart.MultipartFile;
-import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import com.ecom.model.AdminLog;
 import com.ecom.model.Category;
@@ -36,6 +34,7 @@ import com.ecom.model.Pet;
 import com.ecom.model.Product;
 import com.ecom.model.ProductOrder;
 import com.ecom.model.UserDtls;
+import com.ecom.service.AdminLogService;
 import com.ecom.service.CartService;
 import com.ecom.service.CategoryService;
 import com.ecom.service.OrderService;
@@ -45,6 +44,7 @@ import com.ecom.service.UserService;
 import com.ecom.util.CommonUtil;
 import com.ecom.util.OrderStatus;
 
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
 
 @Controller
@@ -702,6 +702,14 @@ public class AdminController {
 		return "redirect:/admin/profile";
 	}
 
+	
+	
+	
+	
+	
+	
+	
+	
 	// Admin Pet
 	// TO PET PAGE
 	@GetMapping("/pet")
@@ -720,80 +728,81 @@ public class AdminController {
 		return "admin/pet"; // ชื่อไฟล์ HTML ที่จะแสดงผล
 	}
 
-	@GetMapping("/pet/add")
-	public String adminShowAddPetForm(Model model, Principal principal) {
-		if (principal == null) {
-			return "redirect:/login";
-		}
-
-		String email = principal.getName();
-		UserDtls user = userService.getUserByEmail(email);
-
-		if (user == null) {
-			return "redirect:/login";
-		}
-
-		List<UserDtls> owner = userService.getAllUsers();
-
-		model.addAttribute("pet", new Pet());
-		model.addAttribute("owner", owner);
-		return "admin/add_pet"; // ชื่อไฟล์ HTML สำหรับฟอร์มเพิ่มสัตว์เลี้ยง
-	}
-
-	// Add new pet
-	@PostMapping("/pet/add")
-	public String addPet(@RequestParam String name, @RequestParam String type, @RequestParam String breed,
-			@RequestParam int age, @RequestParam String color, Principal principal,
-			@RequestParam(required = false) String description, @RequestParam("imagePet") MultipartFile imageFile,
-			HttpSession session) {
-
-		if (principal == null) {
-			return "redirect:/login";
-		}
-
-		String email = principal.getName();
-		UserDtls user = userService.getUserByEmail(email);
-
-		if (user == null) {
-			return "redirect:/login";
-		}
-
-		String imagePath = "/img/pet_img/default.jpg"; // default image path
-
-		try {
-			if (!imageFile.isEmpty()) {
-				String originalFilename = imageFile.getOriginalFilename();
-				String fileExtension = originalFilename.substring(originalFilename.lastIndexOf(".") + 1).toLowerCase();
-
-				// ตรวจสอบว่าเป็นไฟล์ภาพ
-				if (!List.of("jpg", "jpeg", "png", "gif", "webp").contains(fileExtension)) {
-					session.setAttribute("errorImagePetMsg",
-							"Only image files are allowed (jpg, jpeg, png, gif, webp)");
-					return "redirect:/admin/pet";
-				}
-
-				String fileName = UUID.randomUUID().toString() + "_" + originalFilename.replaceAll("\\s+", "_");
-				String uploadDir = "src/main/resources/static/img/pet_img/";
-				File uploadFolder = new File(uploadDir);
-				if (!uploadFolder.exists()) {
-					uploadFolder.mkdirs();
-				}
-
-				Path filePath = Paths.get(uploadDir + fileName);
-				Files.copy(imageFile.getInputStream(), filePath);
-
-				imagePath = "/img/pet_img/" + fileName;
-			}
-
-			petService.addPet(name, type, breed, age, color, user, description, imagePath);
-			session.setAttribute("succAddPetMsg", "Pet added successfully!");
-		} catch (IOException e) {
-			e.printStackTrace();
-			session.setAttribute("errorAddPetMsg", "Failed to upload image: " + e.getMessage());
-		}
-
-		return "redirect:/admin/pet";
-	}
+//	@GetMapping("/pet/add")
+//	public String adminShowAddPetForm(Model model, Principal principal) {
+//		if (principal == null) {
+//			return "redirect:/login";
+//		}
+//
+//		String email = principal.getName();
+//		UserDtls user = userService.getUserByEmail(email);
+//
+//		if (user == null) {
+//			return "redirect:/login";
+//		}
+//
+//		List<UserDtls> owner = userService.getAllUsers();
+//
+//		model.addAttribute("pet", new Pet());
+//		model.addAttribute("owner", owner);
+//		return "admin/add_pet"; // ชื่อไฟล์ HTML สำหรับฟอร์มเพิ่มสัตว์เลี้ยง
+//	}
+//
+//	// Add new pet
+//	@PostMapping("/pet/add")
+//	public String addPet(@RequestParam String name, @RequestParam String type, @RequestParam String breed,
+//			@RequestParam int age, @RequestParam String color, Principal principal, @RequestParam("owner.id") int ownerId,
+//			@RequestParam(required = false) String description, @RequestParam("imagePet") MultipartFile imageFile,
+//			HttpSession session) {
+//
+//		if (principal == null) {
+//			return "redirect:/login";
+//		}
+//
+//		String email = principal.getName();
+//		UserDtls user = userService.getUserByEmail(email);
+//
+//		if (user == null) {
+//			return "redirect:/login";
+//		}
+//
+//		String imagePath = "/img/pet_img/default.jpg"; // default image path
+//
+//		try {
+//			if (!imageFile.isEmpty()) {
+//				String originalFilename = imageFile.getOriginalFilename();
+//				String fileExtension = originalFilename.substring(originalFilename.lastIndexOf(".") + 1).toLowerCase();
+//
+//				// ตรวจสอบว่าเป็นไฟล์ภาพ
+//				if (!List.of("jpg", "jpeg", "png", "gif", "webp").contains(fileExtension)) {
+//					session.setAttribute("errorImagePetMsg",
+//							"Only image files are allowed (jpg, jpeg, png, gif, webp)");
+//					return "redirect:/admin/pet";
+//				}
+//
+//				String fileName = UUID.randomUUID().toString() + "_" + originalFilename.replaceAll("\\s+", "_");
+//				String uploadDir = "src/main/resources/static/img/pet_img/";
+//				File uploadFolder = new File(uploadDir);
+//				if (!uploadFolder.exists()) {
+//					uploadFolder.mkdirs();
+//				}
+//
+//				Path filePath = Paths.get(uploadDir + fileName);
+//				Files.copy(imageFile.getInputStream(), filePath);
+//
+//				imagePath = "/img/pet_img/" + fileName;
+//			}
+//
+//			petService.addPet(name, type, breed, age, color, user, description, imagePath);
+//			session.setAttribute("succAddPetMsg", "Pet added successfully!");
+//		} catch (IOException e) {
+//			e.printStackTrace();
+//			session.setAttribute("errorAddPetMsg", "Failed to upload image: " + e.getMessage());
+//		}
+//		
+//
+//		return "redirect:/admin/pet";
+//	}
 
 	// Delete pet
 	@PostMapping("/pet/delete/{id}")
@@ -853,7 +862,12 @@ public class AdminController {
 			return "redirect:/admin/pet";
 		}
 
-		List<UserDtls> owners = userService.getAllUsers();
+		// ✅ กรองไม่ให้ ROLE_ADMIN โผล่มา
+	    List<UserDtls> owners = userService.getAllUsers()
+	                                       .stream()
+	                                       .filter(u -> !"ROLE_ADMIN".equals(u.getRole()))
+	                                       .collect(Collectors.toList());
+
 
 		model.addAttribute("pet", pet);
 		model.addAttribute("owners", owners);
@@ -863,7 +877,7 @@ public class AdminController {
 	// Edit pet - handle form submission
 	@PostMapping("/pet/edit/{id}")
 	public String updatePet(@RequestParam String name, @RequestParam String type, @RequestParam String breed,
-			@RequestParam int age, @RequestParam String color, @RequestParam String description,
+			@RequestParam int age, @RequestParam String color, @RequestParam String description, @RequestParam("owner.id") int ownerId,
 			@RequestParam("imagePet") MultipartFile imageFile, @PathVariable("id") int petId, HttpSession session,
 			Principal principal) {
 		if (principal == null) {
@@ -917,7 +931,8 @@ public class AdminController {
 			existingPet.setColor(color);
 			existingPet.setDescription(description);
 			existingPet.setImagePet(imagePath);
-			existingPet.setOwner(user);
+			UserDtls owner = userService.getUserById(ownerId);
+			existingPet.setOwner(owner);
 
 			petService.updatePet(existingPet);
 			session.setAttribute("adminSuccUPMsg", "updated successfully!");
