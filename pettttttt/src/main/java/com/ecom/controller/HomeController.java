@@ -155,15 +155,15 @@ public class HomeController {
 	            if (!ObjectUtils.isEmpty(saveUser)) {
 	                if (!file.isEmpty()) {
 	                    // Create directory if it doesn't exist
-	                    String uploadDir = "src/main/resources/static/img/profile_img/";
+	                    String uploadDir = System.getProperty("user.dir") + "/uploads/profile_img/";
 	                    File directory = new File(uploadDir);
 	                    if (!directory.exists()) {
 	                        directory.mkdirs();
 	                    }
 	                    
 	                    // Save file
-	                    Path path = Paths.get(uploadDir + file.getOriginalFilename());
-	                    Files.write(path, file.getBytes());
+	                    Path path = Paths.get(uploadDir, imageName);
+	                    Files.copy(file.getInputStream(), path, StandardCopyOption.REPLACE_EXISTING);
 	                }
 	                session.setAttribute("succMsg", "Register successfully");
 	            } else {
