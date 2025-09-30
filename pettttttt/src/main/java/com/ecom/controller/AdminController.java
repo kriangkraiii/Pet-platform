@@ -879,7 +879,7 @@ public class AdminController {
 	public String updatePet(@RequestParam String name,
 	                        @RequestParam String type,
 	                        @RequestParam String breed,
-	                        @RequestParam String color,
+	                    
 	                        @RequestParam String description,
 	                        @RequestParam("owner.id") int ownerId,
 	                        @RequestParam("imagePet") MultipartFile imageFile,
@@ -936,7 +936,7 @@ public class AdminController {
 	        existingPet.setName(name);
 	        existingPet.setType(type);
 	        existingPet.setBreed(breed);
-	        existingPet.setColor(color);
+
 	        existingPet.setDescription(description);
 	        existingPet.setImagePet(imageName); // เก็บชื่อไฟล์เท่านั้น
 

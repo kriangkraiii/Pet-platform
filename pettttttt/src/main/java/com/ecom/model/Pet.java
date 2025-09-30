@@ -6,6 +6,8 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 
 @Entity
 public class Pet {
@@ -14,13 +16,17 @@ public class Pet {
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Integer id;
 
+	@NotBlank
+    @Size(min = 1, max = 50)
 	private String name;
+	@NotBlank
+	@Size(min = 1, max = 30)
 	private String type;
+	@NotBlank
 	private String breed;
 //	private Integer age;
 	private String imagePet;
 	private String description;
-	private String color;
 
 	@ManyToOne
 	@JoinColumn(name = "user_id")
@@ -82,13 +88,7 @@ public class Pet {
 		this.description = description;
 	}
 
-	public String getColor() {
-		return color;
-	}
 
-	public void setColor(String color) {
-		this.color = color;
-	}
 
 	public UserDtls getOwner() {
 		return owner;
@@ -101,12 +101,12 @@ public class Pet {
 	@Override
 	public String toString() {
 		return "Pet [id=" + id + ", name=" + name + ", type=" + type + ", breed=" + breed 
-				+ ", imagePet=" + imagePet + ", description=" + description + ", color=" + color 
+				+ ", imagePet=" + imagePet + ", description=" + description  
 				+ ", owner=" + owner + "]";
 	}
 
 	public Pet(Integer id, String name, String type, String breed, String imagePet, String description,
-			String color, UserDtls owner) {
+			 UserDtls owner) {
 		super();
 		this.id = id;
 		this.name = name;
@@ -115,7 +115,7 @@ public class Pet {
 		
 		this.imagePet = imagePet;
 		this.description = description;
-		this.color = color;
+	
 		this.owner = owner;
 	}
 

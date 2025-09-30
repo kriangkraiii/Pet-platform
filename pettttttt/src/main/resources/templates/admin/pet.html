@@ -36,7 +36,7 @@
 							<th>Name</th>
 							<th>Type</th>
 							<th>Breed</th>
-							<th>Color</th>
+					
 							<th>Description</th>
 							<th>Image</th>
 							<th>Owner ID</th>
@@ -51,7 +51,7 @@
 							<td th:text="${pet.name}"></td>
 							<td th:text="${pet.type}"></td>
 							<td th:text="${pet.breed}"></td>
-							<td th:text="${pet.color}"></td>
+						
 							<td th:text="${pet.description}"></td>
 							<td>
 								<img th:if="${pet.imagePet}" th:src="@{'/img/pet_img/' + ${pet.imagePet}}" class="img-thumbnail"

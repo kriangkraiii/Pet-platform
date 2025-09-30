@@ -20,12 +20,12 @@ public class PetServiceImpl implements PetService {
 	}
 
 	@Override
-	public void addPet(String name, String type, String breed, String color, UserDtls owner, String description, String imagePet) {
+	public void addPet(String name, String type, String breed, UserDtls owner, String description, String imagePet) {
 	    Pet pet = new Pet();
 	    pet.setName(name);
 	    pet.setType(type);
 	    pet.setBreed(breed);
-	    pet.setColor(color);
+	 
 	    pet.setOwner(owner); // บันทึก owner (user ที่ล็อกอิน)
 	    pet.setDescription(description);
 	    pet.setImagePet(imagePet);
