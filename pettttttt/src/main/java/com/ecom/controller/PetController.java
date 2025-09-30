@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.security.Principal;
 import java.util.List;
 import java.util.UUID;
@@ -82,8 +83,7 @@ public class PetController {
 	}
 	// Add new pet
 	@PostMapping("/add")
-	public String addPet(@RequestParam String name, @RequestParam String type, @RequestParam String breed,
-			@RequestParam int age, @RequestParam String color, Principal principal,
+	public String addPet(@RequestParam String name, @RequestParam String type, @RequestParam String breed, @RequestParam String color, Principal principal,
 			@RequestParam(required = false) String description, @RequestParam("imagePet") MultipartFile imageFile,
 			HttpSession session) {
 
@@ -105,30 +105,29 @@ public class PetController {
 				String originalFilename = imageFile.getOriginalFilename();
 				String fileExtension = originalFilename.substring(originalFilename.lastIndexOf(".") + 1).toLowerCase();
 
-				// ตรวจสอบว่าเป็นไฟล์ภาพ
 				if (!List.of("jpg", "jpeg", "png", "gif", "webp").contains(fileExtension)) {
-					session.setAttribute("errorImagePetMsg", "Only image files are allowed (jpg, jpeg, png, gif, webp)");
+					session.setAttribute("errorImagePMsg", "only image files are allowed (jpg, jpeg, png, gif, webp)");
 					return "redirect:/user/pet";
 				}
 
 				String fileName = UUID.randomUUID().toString() + "_" + originalFilename.replaceAll("\\s+", "_");
-				String uploadDir = "src/main/resources/static/img/pet_img/";
+				String uploadDir = System.getProperty("user.dir") + "/uploads/pet_img/";
+				
 				File uploadFolder = new File(uploadDir);
 				if (!uploadFolder.exists()) {
 					uploadFolder.mkdirs();
 				}
 
-				Path filePath = Paths.get(uploadDir + fileName);
-				Files.copy(imageFile.getInputStream(), filePath);
+				Path filePath = Paths.get(uploadDir, fileName);
+				Files.copy(imageFile.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
 
-				imagePath = "/img/pet_img/" + fileName;
+				String imagePet = fileName;  
+				petService.addPet(name, type, breed, color, user, description, imagePet);
 			}
-
-			petService.addPet(name, type, breed, age, color, user, description, imagePath);
-			session.setAttribute("succAddPetMsg", "Pet added successfully!");
+			session.setAttribute("succAPMsg", "Pet added successfully!");
 		} catch (IOException e) {
 			e.printStackTrace();
-			session.setAttribute("errorAddPetMsg", "Failed to upload image: " + e.getMessage());
+			session.setAttribute("errorAPMsg", "Pet addition failed: " + e.getMessage());
 		}
 
 		return "redirect:/user/pet";
@@ -204,7 +203,6 @@ public class PetController {
 	public String updatePet(@RequestParam String name,
 	                        @RequestParam String type,
 	                        @RequestParam String breed,
-	                        @RequestParam int age,
 	                        @RequestParam String color,
 	                        @RequestParam String description,
 	                        @RequestParam("imagePet") MultipartFile imageFile,
@@ -225,7 +223,7 @@ public class PetController {
 	    }
 
 	    try {
-	        String imagePath = existingPet.getImagePet();
+	        String imageName = existingPet.getImagePet(); // ตอนนี้เก็บเป็น "ชื่อไฟล์" เช่น dog.png
 
 	        if (!imageFile.isEmpty()) {
 	            String originalFilename = imageFile.getOriginalFilename();
@@ -236,32 +234,36 @@ public class PetController {
 	                return "redirect:/user/pet";
 	            }
 
-	            if (imagePath != null && !imagePath.equals("/img/pet_img/default.jpg")) {
-	                String oldImagePath = "src/main/resources/static" + imagePath;
+	            // 🔥 ลบไฟล์เก่า (ถ้าไม่ใช่ default)
+	            if (imageName != null && !imageName.equals("default.jpg")) {
+	                String oldImagePath = System.getProperty("user.dir") + "/uploads/pet_img/" + imageName;
 	                Files.deleteIfExists(Paths.get(oldImagePath));
 	            }
 
+	            // 🔥 สร้างชื่อไฟล์ใหม่
 	            String fileName = UUID.randomUUID().toString() + "_" + originalFilename.replaceAll("\\s+", "_");
-	            String uploadDir = "src/main/resources/static/img/pet_img/";
+
+	            // 🔥 เซฟไปที่ external uploads
+	            String uploadDir = System.getProperty("user.dir") + "/uploads/pet_img/";
 	            File uploadFolder = new File(uploadDir);
 	            if (!uploadFolder.exists()) {
 	                uploadFolder.mkdirs();
 	            }
 
 	            Path filePath = Paths.get(uploadDir, fileName);
-	            Files.copy(imageFile.getInputStream(), filePath);
+	            Files.copy(imageFile.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
 
-	            imagePath = "/img/pet_img/" + fileName;
+	            // ✅ เก็บใน DB แค่ชื่อไฟล์
+	            imageName = fileName;
 	        }
 
 	        // อัปเดตข้อมูลสัตว์เลี้ยง
 	        existingPet.setName(name);
 	        existingPet.setType(type);
 	        existingPet.setBreed(breed);
-	        existingPet.setAge(age);
 	        existingPet.setColor(color);
 	        existingPet.setDescription(description);
-	        existingPet.setImagePet(imagePath);
+	        existingPet.setImagePet(imageName); // เก็บชื่อไฟล์
 	        existingPet.setOwner(user);
 
 	        petService.updatePet(existingPet);
@@ -273,6 +275,7 @@ public class PetController {
 
 	    return "redirect:/user/pet";
 	}
+
 	
 	
 }

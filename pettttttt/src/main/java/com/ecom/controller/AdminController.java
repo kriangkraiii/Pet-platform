@@ -876,72 +876,92 @@ public class AdminController {
 
 	// Edit pet - handle form submission
 	@PostMapping("/pet/edit/{id}")
-	public String updatePet(@RequestParam String name, @RequestParam String type, @RequestParam String breed,
-			@RequestParam int age, @RequestParam String color, @RequestParam String description, @RequestParam("owner.id") int ownerId,
-			@RequestParam("imagePet") MultipartFile imageFile, @PathVariable("id") int petId, HttpSession session,
-			Principal principal) {
-		if (principal == null) {
-			return "redirect:/login";
-		}
+	public String updatePet(@RequestParam String name,
+	                        @RequestParam String type,
+	                        @RequestParam String breed,
+	                        @RequestParam String color,
+	                        @RequestParam String description,
+	                        @RequestParam("owner.id") int ownerId,
+	                        @RequestParam("imagePet") MultipartFile imageFile,
+	                        @PathVariable("id") int petId,
+	                        HttpSession session,
+	                        Principal principal) {
+	    if (principal == null) {
+	        return "redirect:/login";
+	    }
 
-		String email = principal.getName();
-		UserDtls user = userService.getUserByEmail(email);
+	    Pet existingPet = petService.getPetById(petId);
+	    if (existingPet == null) {
+	        session.setAttribute("adminErrorNoPetMsg", "Not found or you don't have permission to edit this pet");
+	        return "redirect:/admin/pet";
+	    }
 
-		Pet existingPet = petService.getPetById(petId);
-		if (existingPet == null) {
-			session.setAttribute("adminErrorNoPetMsg", "Not found or you don't have permission to edit this pet");
-			return "redirect:/admin/pet";
-		}
+	    try {
+	        String imageName = existingPet.getImagePet(); // เก็บเฉพาะชื่อไฟล์ เช่น "dog.png"
 
-		try {
-			String imagePath = existingPet.getImagePet();
+	        if (!imageFile.isEmpty()) {
+	            String originalFilename = imageFile.getOriginalFilename();
+	            String fileExtension = originalFilename.substring(originalFilename.lastIndexOf(".") + 1).toLowerCase();
 
-			if (!imageFile.isEmpty()) {
-				String originalFilename = imageFile.getOriginalFilename();
-				String fileExtension = originalFilename.substring(originalFilename.lastIndexOf(".") + 1).toLowerCase();
+	            if (!List.of("jpg", "jpeg", "png", "gif", "webp").contains(fileExtension)) {
+	                session.setAttribute("errorImagePMsg",
+	                        "only image files are allowed (jpg, jpeg, png, gif, webp)");
+	                return "redirect:/admin/pet"; // ✅ แก้เป็น admin
+	            }
 
-				if (!List.of("jpg", "jpeg", "png", "gif", "webp").contains(fileExtension)) {
-					session.setAttribute("errorImagePMsg", "only image files are allowed (jpg, jpeg, png, gif, webp)");
-					return "redirect:/admin/pet";
-				}
+	            // 🔥 ลบไฟล์เก่า (ถ้าไม่ใช่ default)
+	            if (imageName != null && !imageName.equals("default.jpg")) {
+	                String oldImagePath = System.getProperty("user.dir") + "/uploads/pet_img/" + imageName;
+	                Files.deleteIfExists(Paths.get(oldImagePath));
+	            }
 
-				if (imagePath != null && !imagePath.equals("/img/pet_img/default.jpg")) {
-					String oldImagePath = "src/main/resources/static" + imagePath;
-					Files.deleteIfExists(Paths.get(oldImagePath));
-				}
+	            // 🔥 สร้างชื่อไฟล์ใหม่
+	            String fileName = UUID.randomUUID().toString() + "_" + originalFilename.replaceAll("\\s+", "_");
 
-				String fileName = UUID.randomUUID().toString() + "_" + originalFilename.replaceAll("\\s+", "_");
-				String uploadDir = "src/main/resources/static/img/pet_img/";
-				File uploadFolder = new File(uploadDir);
-				if (!uploadFolder.exists()) {
-					uploadFolder.mkdirs();
-				}
+	            // 🔥 เซฟไปที่ external uploads
+	            String uploadDir = System.getProperty("user.dir") + "/uploads/pet_img/";
+	            File uploadFolder = new File(uploadDir);
+	            if (!uploadFolder.exists()) {
+	                uploadFolder.mkdirs();
+	            }
 
-				Path filePath = Paths.get(uploadDir, fileName);
-				Files.copy(imageFile.getInputStream(), filePath);
+	            Path filePath = Paths.get(uploadDir, fileName);
+	            Files.copy(imageFile.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
 
-				imagePath = "/img/pet_img/" + fileName;
-			}
+	            // ✅ เก็บใน DB แค่ชื่อไฟล์
+	            imageName = fileName;
+	        }
 
-			// อัปเดตข้อมูลสัตว์เลี้ยง
-			existingPet.setName(name);
-			existingPet.setType(type);
-			existingPet.setBreed(breed);
-			existingPet.setAge(age);
-			existingPet.setColor(color);
-			existingPet.setDescription(description);
-			existingPet.setImagePet(imagePath);
-			UserDtls owner = userService.getUserById(ownerId);
-			existingPet.setOwner(owner);
+	        // อัปเดตข้อมูลสัตว์เลี้ยง
+	        existingPet.setName(name);
+	        existingPet.setType(type);
+	        existingPet.setBreed(breed);
+	        existingPet.setColor(color);
+	        existingPet.setDescription(description);
+	        existingPet.setImagePet(imageName); // เก็บชื่อไฟล์เท่านั้น
 
-			petService.updatePet(existingPet);
-			session.setAttribute("adminSuccUPMsg", "updated successfully!");
-		} catch (IOException e) {
-			e.printStackTrace();
-			session.setAttribute("adminErrorUPMsg", "updated failed " + e.getMessage());
-		}
+	        // ✅ ตรวจสอบ ownerId ก่อน set
+	        if (ownerId > 0) {
+	            UserDtls owner = userService.getUserById(ownerId);
+	            if (owner != null) {
+	                existingPet.setOwner(owner);
+	            }
+	        }
 
-		return "redirect:/admin/pet";
+	        petService.updatePet(existingPet);
+	        session.setAttribute("succUPMsg", "updated successfully!");
+	    } catch (IOException e) {
+	        e.printStackTrace();
+	        session.setAttribute("errorUPMsg", "update failed: " + e.getMessage());
+	    }
+
+	    return "redirect:/admin/pet";
+	}
+
+	
+	@GetMapping("/pet/test")
+	public String testPet() {
+		return "test"; // ชื่อไฟล์ HTML สำหรับฟอร์มแก้ไข
 	}
 
 }

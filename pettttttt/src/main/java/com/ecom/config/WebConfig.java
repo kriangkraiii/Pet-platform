@@ -25,5 +25,11 @@ public class WebConfig implements WebMvcConfigurer {
                 
         registry.addResourceHandler("/js/**")
                 .addResourceLocations("classpath:/static/js/");
+        
+     // ✅ New handler: serve uploaded pet images from outside "src"
+        String uploadPath = System.getProperty("user.dir") + "/uploads/pet_img/";
+        registry.addResourceHandler("/img/pet_img/**")
+                .addResourceLocations("file:" + uploadPath)
+                .setCachePeriod(0);
     }
 }

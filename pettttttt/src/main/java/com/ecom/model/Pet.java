@@ -17,7 +17,7 @@ public class Pet {
 	private String name;
 	private String type;
 	private String breed;
-	private Integer age;
+//	private Integer age;
 	private String imagePet;
 	private String description;
 	private String color;
@@ -58,13 +58,13 @@ public class Pet {
 		this.breed = breed;
 	}
 
-	public Integer getAge() {
-		return age;
-	}
-
-	public void setAge(Integer age) {
-		this.age = age;
-	}
+//	public Integer getAge() {
+//		return age;
+//	}
+//
+//	public void setAge(Integer age) {
+//		this.age = age;
+//	}
 
 	public String getImagePet() {
 		return imagePet;
@@ -100,19 +100,19 @@ public class Pet {
 
 	@Override
 	public String toString() {
-		return "Pet [id=" + id + ", name=" + name + ", type=" + type + ", breed=" + breed + ", age=" + age
+		return "Pet [id=" + id + ", name=" + name + ", type=" + type + ", breed=" + breed 
 				+ ", imagePet=" + imagePet + ", description=" + description + ", color=" + color 
 				+ ", owner=" + owner + "]";
 	}
 
-	public Pet(Integer id, String name, String type, String breed, Integer age, String imagePet, String description,
+	public Pet(Integer id, String name, String type, String breed, String imagePet, String description,
 			String color, UserDtls owner) {
 		super();
 		this.id = id;
 		this.name = name;
 		this.type = type;
 		this.breed = breed;
-		this.age = age;
+		
 		this.imagePet = imagePet;
 		this.description = description;
 		this.color = color;
