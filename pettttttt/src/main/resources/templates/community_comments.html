@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org" th:replace="~{base::layout(~{::section})}">
+
+<head>
+	<meta charset="UTF-8" />
+	<title th:text="'Comments • ' + ${post.user.name}">Comments</title>
+	<!-- CSRF meta tags -->
+	<meta name="_csrf" th:content="${_csrf?.token}" />
+	<meta name="_csrf_header" th:content="${_csrf?.headerName}" />
+</head>
+
+<body>
+	<section>
+		<div class="container" style="max-width: 1100px; margin: 90px auto 60px;">
+			<div class="row g-4">
+
+				<!-- Left: โพสต์จาก Community -->
+				<div class="col-lg-7">
+					<div class="card" style="border-radius: 16px; overflow: hidden;">
+						<img th:src="@{${post.postImage ?: post.pet.imagePet}}" alt="Post Image" class="card-img-top"
+							style="object-fit: cover; max-height: 420px;">
+						<div class="card-body">
+							
+							
+							
+							
+							
+							<div class="d-flex align-items-center mb-3">
+								<img th:src="@{'/img/profile_img/' + ${user.profileImage}}"
+									alt="User Profile"
+									style="width: 50px; height: 50px; border-radius: 50%; object-fit: cover; margin-right: 12px;">
+								<div>
+									
+									
+									
+									
+									
+									
+									
+									
+									
+									
+									<h5 class="mb-0" th:text="${post.user.name}">User Name</h5>
+									<small class="text-muted"
+										th:text="${#temporals.format(post.createdAt, 'dd/MM/yyyy HH:mm')}">Date</small>
+								</div>
+							</div>
+							<p class="card-text mb-3" th:text="${post.description}">Post Description</p>
+
+							<div style="background: #f8fafc; padding: 12px; border-radius: 8px; margin: 12px 0;">
+								<div class="d-flex align-items-center">
+									<img th:src="@{'/img/pet_img/' + ${pet.imagePet}}" alt="Pet Image"
+										style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover; margin-right: 12px;">
+									<div>
+										<strong th:text="${post.pet.name}">Pet Name</strong>
+										<div class="text-muted small"
+											th:text="${post.pet.type + ' • ' + post.pet.breed}">Pet Info</div>
+									</div>
+								</div>
+							</div>
+
+							<!--  
+							<button type="button" th:id="'like-btn-' + ${post.pet.id}"
+								class="btn btn-light"
+								th:classappend="${post.pet.likedByCurrentUser} ? ' liked' : ''"
+								th:onclick="'toggleLike(' + ${post.pet.id} + ')'"
+								style="border: 1px solid #e5e7eb;">
+								<i class="fa-heart"
+									th:classappend="${post.pet.likedByCurrentUser} ? ' fas' : ' far'"></i>
+								<span th:id="'like-count-' + ${post.pet.id}"
+									th:text="${post.pet.likeCount}">0</span>
+							</button> -->
+
+							<a href="/community" class="btn btn-outline-secondary ms-2">Back to Community</a>
+						</div>
+					</div>
+				</div>
+
+				<!-- Right: ฟีดคอมเมนต์ -->
+				<div class="col-lg-5" id="comments">
+					<div class="card" style="border-radius: 16px;">
+						<div class="card-body">
+							<div class="d-flex align-items-center justify-content-between mb-3">
+								<h5 class="mb-0">Comments</h5>
+								<span class="text-muted" th:text="${commentCount} + ' comments'">0 comments</span>
+							</div>
+
+							<!-- ฟอร์มโพสต์คอมเมนต์ -->
+							<div th:if="${user != null}">
+								<form th:action="@{'/community/post/' + ${post.id} + '/comments'}" method="post"
+									class="d-flex gap-2 mb-3">
+									<input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}"
+										th:value="${_csrf.token}">
+									<input type="text" name="content" class="form-control"
+										placeholder="Write a comment..." required maxlength="1000">
+									<button class="btn btn-primary" type="submit">Post</button>
+								</form>
+							</div>
+							<div th:if="${user == null}" class="alert alert-info py-2">
+								Please <a href="/signin">login</a> to comment.
+							</div>
+
+							<!-- รายการคอมเมนต์ -->
+							<div class="list-group">
+								<div class="list-group-item d-flex justify-content-between align-items-start"
+									th:each="c : ${comments}">
+									<div>
+										<strong th:text="${c.user.name}">User</strong>
+										<small class="text-muted d-block"
+											th:text="${#temporals.format(c.createdAt, 'yyyy-MM-dd HH:mm')}">date</small>
+										<div th:text="${c.content}" style="white-space: pre-wrap;"></div>
+									</div>
+
+									<!-- ปุ่ม Delete เฉพาะเจ้าของคอมเมนต์หรือเจ้าของโพสต์ -->
+									<div th:if="${user != null and (user.id == c.user.id or user.id == post.user.id)}">
+										<form th:action="@{'/community/comment/' + ${c.id} + '/delete'}" method="post"
+											onsubmit="return confirm('Are you sure you want to delete this comment?');">
+											<input type="hidden" th:if="${_csrf != null}"
+												th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+											<button type="submit" class="btn btn-sm btn-outline-danger">Delete</button>
+										</form>
+									</div>
+								</div>
+								<div th:if="${#lists.isEmpty(comments)}" class="text-muted text-center py-3">
+									No comments yet. Be the first to comment!
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+
+			</div>
+		</div>
+
+		<!-- JS สำหรับ toggle like -->
+		<script>
+			function getCSRFToken() {
+				const token = document.querySelector('meta[name="_csrf"]');
+				return token ? token.getAttribute('content') : '';
+			}
+
+			function getCSRFHeader() {
+				const header = document.querySelector('meta[name="_csrf_header"]');
+				return header ? header.getAttribute('content') : 'X-CSRF-TOKEN';
+			}
+
+			function authHeaders() {
+				const headers = {'X-Requested-With': 'XMLHttpRequest'};
+				const token = getCSRFToken();
+				const headerName = getCSRFHeader();
+
+				if (token && headerName) {
+					headers[headerName] = token;
+				}
+
+				return headers;
+			}
+
+			async function toggleLike(petId) {
+				const btn = document.getElementById('like-btn-' + petId);
+				const cnt = document.getElementById('like-count-' + petId);
+				const icon = btn.querySelector('i.fa-heart');
+				const liked = btn.classList.contains('liked');
+				const url = liked ? `/community/pet/${petId}/unlike` : `/community/pet/${petId}/like`;
+				btn.disabled = true;
+				try {
+					const res = await fetch(url, {
+						method: 'POST',
+						headers: authHeaders(),
+						credentials: 'same-origin'
+					});
+					if (res.status === 401 || res.status === 403) {
+						location.href = '/signin';
+						return;
+					}
+					const text = await res.text();
+					const n = parseInt(text, 10);
+					if (!Number.isNaN(n)) {
+						cnt.textContent = n.toString();
+						btn.classList.toggle('liked', !liked);
+						icon.classList.remove('far', 'fas');
+						icon.classList.add(!liked ? 'fas' : 'far');
+					}
+				} catch (e) {
+					console.error('toggleLike (comments page) error', e);
+				} finally {
+					btn.disabled = false;
+				}
+			}
+		</script>
+
+	</section>
+</body>
+
+</html>

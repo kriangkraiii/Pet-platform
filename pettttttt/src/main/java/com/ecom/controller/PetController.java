@@ -83,7 +83,7 @@ public class PetController {
 	}
 	// Add new pet
 	@PostMapping("/add")
-	public String addPet(@RequestParam String name, @RequestParam String type, @RequestParam String breed, @RequestParam String color, Principal principal,
+	public String addPet(@RequestParam String name, @RequestParam String type, @RequestParam String breed,  Principal principal,
 			@RequestParam(required = false) String description, @RequestParam("imagePet") MultipartFile imageFile,
 			HttpSession session) {
 
@@ -122,7 +122,7 @@ public class PetController {
 				Files.copy(imageFile.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
 
 				String imagePet = fileName;  
-				petService.addPet(name, type, breed, color, user, description, imagePet);
+				petService.addPet(name, type, breed, user, description, imagePet);
 			}
 			session.setAttribute("succAPMsg", "Pet added successfully!");
 		} catch (IOException e) {
@@ -203,7 +203,7 @@ public class PetController {
 	public String updatePet(@RequestParam String name,
 	                        @RequestParam String type,
 	                        @RequestParam String breed,
-	                        @RequestParam String color,
+	                      
 	                        @RequestParam String description,
 	                        @RequestParam("imagePet") MultipartFile imageFile,
 	                        @PathVariable("id") int petId,
@@ -261,7 +261,7 @@ public class PetController {
 	        existingPet.setName(name);
 	        existingPet.setType(type);
 	        existingPet.setBreed(breed);
-	        existingPet.setColor(color);
+	       
 	        existingPet.setDescription(description);
 	        existingPet.setImagePet(imageName); // เก็บชื่อไฟล์
 	        existingPet.setOwner(user);

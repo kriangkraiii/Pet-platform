@@ -5,7 +5,7 @@ import com.ecom.model.UserDtls;
 import java.util.List;
 
 public interface PetService {
-	public void addPet(String name, String type, String breed, String color, UserDtls owner,String description,String imagePet);
+	public void addPet(String name, String type, String breed, UserDtls owner,String description,String imagePet);
 
 	public List<Pet> getUserPets(UserDtls user);
 
@@ -18,4 +18,12 @@ public interface PetService {
 	public void deletePet(int id);
 
 	public List<Pet> getAllPets();
+	
+	public List<Pet> getPetsByOwner(UserDtls owner);
+
+	void savePet(Pet pet);
+
+	boolean deletePetWithDependencies(Integer petId);
+
+
 }

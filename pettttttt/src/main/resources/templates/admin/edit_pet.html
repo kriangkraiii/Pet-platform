@@ -16,33 +16,29 @@
 					<div class="row mb-2">
 						<div class="col"> <label for="name" class="form-label">Pet Name</label> <input type="text"
 								class="form-control" id="name" name="name" th:value="${pet.name}" required> </div>
-						<div class="col"> <label for="type" class="form-label">Pet Type</label> <input type="text"
-								class="form-control" id="type" name="type" th:value="${pet.type}" required> </div>
-					</div>
-					<div class="row mb-2 autocomplete">
-						<div class="col">
-							<label for="ownerEmail" class="form-label">Change Owner From Email</label>
-							<input type="text" class="form-control" id="ownerEmail" placeholder="Type email..."
-								th:value="${pet.owner.email}" required>
-							<!-- hidden field เก็บค่า id ของเจ้าของคนปัจจุบัน -->
-							<input type="hidden" id="ownerId" name="owner.id" th:value="${pet.owner.id}">
+						<div class="row mb-2 autocomplete">
+							<div class="col">
+								<label for="ownerEmail" class="form-label">Change Owner From Email</label>
+								<input type="text" class="form-control" id="ownerEmail" placeholder="Type email..."
+									th:value="${pet.owner.email}" required>
+								<!-- hidden field เก็บค่า id ของเจ้าของคนปัจจุบัน -->
+								<input type="hidden" id="ownerId" name="owner.id" th:value="${pet.owner.id}">
+							</div>
 						</div>
 					</div>
+
 					<div class="row mb-2">
+						<div class="col"> 
+							<label for="type" class="form-label">Pet Type</label> 
+							<input type="text" class="form-control" id="type" name="type" th:value="${pet.type}" readonly> </div>
 						<div class="col">
 							<label for="breed" class="form-label">Breed</label>
-							<input type="text" class="form-control" id="breed" name="breed" th:value="${pet.breed}"
-								required>
+							<select class="form-control" name="breed" id="breed" required>
+								<option value="">-- Select Breed --</option>
+							</select>
 						</div>
-						<!--<div class="col">
-							<label for="age" class="form-label">Age</label>
-							<input type="number" class="form-control" id="age" name="age" th:value="${pet.age}"
-								required>
-						</div>-->
 					</div>
 					<div class="row mb-2">
-						<div class="col"> <label for="color" class="form-label">Color</label> <input type="text"
-								class="form-control" id="color" name="color" th:value="${pet.color}" required> </div>
 						<div class="col"> <label for="description" class="form-label">Description</label> <input
 								type="text" class="form-control" id="description" name="description"
 								th:value="${pet.description}" required> </div>
@@ -77,6 +73,47 @@
 					reader.readAsDataURL(input.files[0]);
 				}
 			} 
+		</script>
+
+		<script th:inline="javascript">
+			// กำหนด breeds ของแต่ละ type
+			const breedOptions = {
+				Dog: ['Thai Ridgeback', 'Bang Kaew Dog', 'Thai native village dog', 'Labrador Retriever', 'Golden Retriever',
+					'Poodle', 'Shih Tzu', 'Pomeranian', 'Chihuahua', 'French Bulldog', 'English Bulldog', 'Beagle', 'German Shepherd', 'Siberian Husky',
+					'Corgi', 'Dachshund', 'Boxer', 'Rottweiler', 'Maltese', 'Yorkshire Terrier (Yorkie)', 'Shiba Inu', 'Samoyed / Alaskan Malamute',
+					'American Bully / Pit-type', 'Cockapoo', 'Cavapoo', 'Maltipoo', 'Goldendoodle', 'Labradoodle', 'Great Dane', 'Mastiff', 'Saluki',
+					'Afghan Hound', 'Irish Setter'],
+				Cat: ['Thai/Wichien-maat', 'Korat / Si-Sawat', 'Suphalak', 'Khao Manee', 'Mekong Bobtail', 'Siamese',
+					'Persian / Exotic Shorthair', 'Maine Coon', 'Ragdoll', 'British Shorthair', 'Scottish Fold', 'Bengal',
+					'Sphynx', 'Russian Blue', 'Burmese', 'Abyssinian', 'Savannah', 'Chausie', 'Domestic shorthair', 'Norwegian Forest',
+					'Turkish Angora', 'Van, Singapura', 'Maine']
+			};
+
+			const type = /*[[${pet.type}]]*/ 'Dog'; // type ของสัตว์ปัจจุบัน
+			const currentBreed = /*[[${pet.breed}]]*/ ''; // breed ปัจจุบัน
+
+			const breedSelect = document.getElementById('breed');
+
+			function populateBreeds(selectedType, selectedBreed) {
+				breedSelect.innerHTML = '<option value="">-- Select Breed --</option>';
+
+				if (breedOptions[selectedType]) {
+					const sortedBreeds = breedOptions[selectedType].sort((a, b) => a.localeCompare(b));
+					sortedBreeds.forEach(b => {
+						const option = document.createElement('option');
+						option.value = b;
+						option.text = b;
+						if (b === selectedBreed) {
+							option.selected = true; // เลือกค่าเดิม
+						}
+						breedSelect.appendChild(option);
+					});
+				}
+			}
+
+			populateBreeds(type, currentBreed);
+
+
 		</script>
 
 		<!-- JavaScript for autocomplete functionality -->
