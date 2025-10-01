@@ -46,6 +46,22 @@ public class CommonUtil {
 	    mailSender.send(message);
 	    return true;
 	}
+	
+	// เพิ่ม method ใหม่สำหรับส่ง email แจ้งเตือน
+			public Boolean sendNotificationEmail(String recipientEmail, String subject, String content) 
+			        throws UnsupportedEncodingException, MessagingException {
+			    
+			    MimeMessage message = mailSender.createMimeMessage();
+			    MimeMessageHelper helper = new MimeMessageHelper(message);
+
+			    helper.setFrom("seven1aaplus@gmail.com", "Pet Community");
+			    helper.setTo(recipientEmail);
+			    helper.setSubject(subject);
+			    helper.setText(content, true);
+			    
+			    mailSender.send(message);
+			    return true;
+			}
 
 
 	public static String generateUrl(HttpServletRequest request) {

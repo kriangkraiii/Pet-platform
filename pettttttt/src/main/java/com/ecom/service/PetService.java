@@ -18,4 +18,12 @@ public interface PetService {
 	public void deletePet(int id);
 
 	public List<Pet> getAllPets();
+	
+	public List<Pet> getPetsByOwner(UserDtls owner);
+
+	void savePet(Pet pet);
+
+	boolean deletePetWithDependencies(Integer petId);
+
+
 }
