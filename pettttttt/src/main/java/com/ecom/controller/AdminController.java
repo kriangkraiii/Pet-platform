@@ -459,7 +459,8 @@ public class AdminController {
 	    // Calculate statistics efficiently
 	    List<Product> products = page.getContent();
 	    long activeProductsCount = products.stream().filter(Product::getIsActive).count();
-	    long lowStockCount = products.stream().filter(p -> p.getStock() != null && p.getStock().intValue() < 10).count();
+	    long lowStockCount = products.stream().filter(p -> p.getStock() < 10).count();
+
 
 	    // Check if each product has orders and create a map for the template
 	    Map<Integer, Boolean> productOrdersMap = new HashMap<>();

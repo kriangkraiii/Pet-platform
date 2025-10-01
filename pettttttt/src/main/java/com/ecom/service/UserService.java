@@ -40,4 +40,6 @@ public Integer getNewUsersToday();
 public List<UserDtls> getRecentUsers(int limit);
 
 public Integer getUsersCount();
+
+List<UserDtls> getAllUsers();
 }
