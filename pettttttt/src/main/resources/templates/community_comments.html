@@ -17,8 +17,10 @@
 				<!-- Left: โพสต์จาก Community -->
 				<div class="col-lg-7">
 					<div class="card" style="border-radius: 16px; overflow: hidden;">
-						<img th:src="@{${post.postImage ?: post.pet.imagePet}}" alt="Post Image" class="card-img-top"
-							style="object-fit: cover; max-height: 420px;">
+					<img th:src="${post.postImage != null and !post.postImage.empty ? '/uploads/posts/' + post.postImage : '/img/pet_img/' + post.pet.imagePet}" 
+     alt="Post Image" class="card-img-top"
+     style="object-fit: cover; max-height: 420px;">
+
 						<div class="card-body">
 							
 							

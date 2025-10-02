@@ -24,11 +24,15 @@
 
 					<hr>
 
-					<div class="d-flex justify-content-center mb-4">
-						<img alt="Profile Image" th:src="@{'/img/profile_img/'+${user.profileImage}}"
-							class="border p-2"
-							style="width: 180px; height: 180px; border-radius: 50%;">
-					</div>
+<!-- Profile Image -->
+<div class="d-flex justify-content-center mb-4">
+    <img th:src="@{${user.profileImage != null and user.profileImage != '' ? '/img/profile_img/' + user.profileImage : '/img/profile_img/default.png'}}" 
+         alt="Profile Image"
+         class="border p-2" 
+         style="width: 180px; height: 180px; border-radius: 50%; object-fit: cover;"
+         onerror="this.src='/img/profile_img/default.png'">
+</div>
+
 
 
 					<!-- Profile Update Form -->

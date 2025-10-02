@@ -164,8 +164,9 @@
 									</td>
 									<td class="text-center"><strong>฿[[${p.price}]]</strong></td>
 									<td class="text-center"><span th:if="${p.discount > 0}"
-										class="badge bg-danger"> [[฿{p.discount}]]% </span> <span
+										class="badge bg-danger"> [[${p.discount}]]% </span> <span
 										th:if="${p.discount == 0}" class="text-muted">-</span></td>
+
 									<td class="text-center"><strong class="text-success">฿[[${p.discountPrice}]]</strong>
 									</td>
 									<td class="text-center"><span th:if="${p.isActive}"

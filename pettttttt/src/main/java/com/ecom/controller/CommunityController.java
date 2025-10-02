@@ -178,20 +178,18 @@ public class CommunityController {
 
 	        if (postImage != null && !postImage.isEmpty()) {
 	            String fileName = System.currentTimeMillis() + "_" + postImage.getOriginalFilename();
-
-	            // เขียนไฟล์ลง classpath: static/upload/posts
-	            File staticDir = new ClassPathResource("static").getFile();
-	            File uploadDir = new File(staticDir, "upload" + File.separator + "posts");
-
-	            if (!uploadDir.exists()) {
-	                uploadDir.mkdirs();
+	            
+	            // Save to external uploads directory like pet images
+	            String uploadDir = System.getProperty("user.dir") + "/uploads/posts/";
+	            File uploadFolder = new File(uploadDir);
+	            if (!uploadFolder.exists()) {
+	                uploadFolder.mkdirs();
 	            }
 
-	            Path path = Paths.get(uploadDir.getAbsolutePath() + File.separator + fileName);
+	            Path path = Paths.get(uploadDir, fileName);
 	            Files.copy(postImage.getInputStream(), path, StandardCopyOption.REPLACE_EXISTING);
 
-	            // path สำหรับแสดงผลในหน้าเว็บ
-	            postImagePath = "/upload/posts/" + fileName;
+	            postImagePath = "/upload/posts/" + fileName;  // Store just the filename
 	        }
 
 	        CommunityPost newPost = new CommunityPost();
@@ -211,6 +209,7 @@ public class CommunityController {
 
 	    return "redirect:/community";
 	}
+
     
 	
 

@@ -18,5 +18,7 @@ public interface UserRepository extends JpaRepository<UserDtls, Integer> {
 	public Boolean existsByEmail(String email);
 	Integer countByCreatedDateBetween(Date startDate, Date endDate);
 	List<UserDtls> findTop5ByOrderByCreatedDateDesc();
+	
+	
 
 }

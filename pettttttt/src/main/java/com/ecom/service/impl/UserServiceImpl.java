@@ -9,7 +9,8 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;
-
+import java.util.UUID;
+import java.nio.file.StandardCopyOption;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -62,15 +63,21 @@ public class UserServiceImpl implements UserService {
 
 	@Override
 	public UserDtls saveUser(UserDtls user) {
-		user.setRole("ROLE_USER");
-		user.setIsEnable(true);
-		user.setAccountNonLocked(true);
-		user.setFailedAttempt(0);
+	    user.setRole("ROLE_USER");
+	    user.setIsEnable(true);
+	    user.setAccountNonLocked(true);
+	    user.setFailedAttempt(0);
+	    user.setCreatedDate(new Date()); // Add creation date
+	    
+	    // Set default profile image if none provided
+	    if (user.getProfileImage() == null || user.getProfileImage().isEmpty()) {
+	        user.setProfileImage("default.png");
+	    }
 
-		String encodePassword = passwordEncoder.encode(user.getPassword());
-		user.setPassword(encodePassword);
-		UserDtls saveUser = userRepository.save(user);
-		return saveUser;
+	    String encodePassword = passwordEncoder.encode(user.getPassword());
+	    user.setPassword(encodePassword);
+	    UserDtls saveUser = userRepository.save(user);
+	    return saveUser;
 	}
 	@Override
 	public UserDtls getUserById(Integer id) {
@@ -160,52 +167,65 @@ public class UserServiceImpl implements UserService {
 
 	@Override
 	public UserDtls updateUserProfile(UserDtls user, MultipartFile img) {
+	    UserDtls dbUser = userRepository.findById(user.getId()).get();
 
-		UserDtls dbUser = userRepository.findById(user.getId()).get();
+	    if (!img.isEmpty()) {
+	        dbUser.setProfileImage(img.getOriginalFilename());
+	    }
 
-		if (!img.isEmpty()) {
-			dbUser.setProfileImage(img.getOriginalFilename());
-		}
+	    if (!ObjectUtils.isEmpty(dbUser)) {
+	        dbUser.setName(user.getName());
+	        dbUser.setMobileNumber(user.getMobileNumber());
+	        dbUser.setAddress(user.getAddress());
+	        dbUser.setCity(user.getCity());
+	        dbUser.setState(user.getState());
+	        dbUser.setPincode(user.getPincode());
+	        dbUser = userRepository.save(dbUser);
+	    }
 
-		if (!ObjectUtils.isEmpty(dbUser)) {
+	    try {
+	        if (!img.isEmpty()) {
+	            String originalFilename = img.getOriginalFilename();
+	            String fileName = UUID.randomUUID().toString() + "_" + originalFilename.replaceAll("\\s+", "_");
+	            
+	            // เก็บไฟล์ใน external directory เหมือน pet images
+	            String uploadDir = System.getProperty("user.dir") + "/uploads/profile_img/";
+	            File uploadFolder = new File(uploadDir);
+	            if (!uploadFolder.exists()) {
+	                uploadFolder.mkdirs();
+	            }
 
-			dbUser.setName(user.getName());
-			dbUser.setMobileNumber(user.getMobileNumber());
-			dbUser.setAddress(user.getAddress());
-			dbUser.setCity(user.getCity());
-			dbUser.setState(user.getState());
-			dbUser.setPincode(user.getPincode());
-			dbUser = userRepository.save(dbUser);
-		}
+	            Path filePath = Paths.get(uploadDir, fileName);
+	            Files.copy(img.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
+	            
+	            // เก็บแค่ชื่อไฟล์ใน database
+	            dbUser.setProfileImage(fileName);
+	            userRepository.save(dbUser);
+	        }
+	    } catch (Exception e) {
+	        e.printStackTrace();
+	    }
 
-		try {
-			if (!img.isEmpty()) {
-				File saveFile = new ClassPathResource("static/img").getFile();
-
-				Path path = Paths.get(saveFile.getAbsolutePath() + File.separator + "profile_img" + File.separator
-						+ img.getOriginalFilename());
-
-//			System.out.println(path);
-				Files.copy(img.getInputStream(), path, StandardCopyOption.REPLACE_EXISTING);
-			}
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-
-		return dbUser;
+	    return dbUser;
 	}
 
 	@Override
 	public UserDtls saveAdmin(UserDtls user) {
-		user.setRole("ROLE_ADMIN");
-		user.setIsEnable(true);
-		user.setAccountNonLocked(true);
-		user.setFailedAttempt(0);
+	    user.setRole("ROLE_ADMIN");
+	    user.setIsEnable(true);
+	    user.setAccountNonLocked(true);
+	    user.setFailedAttempt(0);
+	    user.setCreatedDate(new Date()); // Add creation date
+	    
+	    // Set default profile image if none provided
+	    if (user.getProfileImage() == null || user.getProfileImage().isEmpty()) {
+	        user.setProfileImage("default.png");
+	    }
 
-		String encodePassword = passwordEncoder.encode(user.getPassword());
-		user.setPassword(encodePassword);
-		UserDtls saveUser = userRepository.save(user);
-		return saveUser;
+	    String encodePassword = passwordEncoder.encode(user.getPassword());
+	    user.setPassword(encodePassword);
+	    UserDtls saveUser = userRepository.save(user);
+	    return saveUser;
 	}
 
 	@Override

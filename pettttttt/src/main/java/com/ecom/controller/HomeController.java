@@ -139,8 +139,7 @@ public class HomeController {
 	}
 
 	@PostMapping("/saveUser")
-	public String saveUser(@ModelAttribute UserDtls user, @RequestParam("img") MultipartFile file, HttpSession session)
-	        throws IOException {
+	public String saveUser(@ModelAttribute UserDtls user, HttpSession session) {
 
 	    Boolean existsEmail = userService.existsEmail(user.getEmail());
 
@@ -148,23 +147,11 @@ public class HomeController {
 	        session.setAttribute("errorMsg", "Email already exist");
 	    } else {
 	        try {
-	            String imageName = file.isEmpty() ? "default.jpg" : file.getOriginalFilename();
-	            user.setProfileImage(imageName);
+	            // Set default profile image
+	            user.setProfileImage("default.png");
 	            UserDtls saveUser = userService.saveUser(user);
 
 	            if (!ObjectUtils.isEmpty(saveUser)) {
-	                if (!file.isEmpty()) {
-	                    // Create directory if it doesn't exist
-	                    String uploadDir = System.getProperty("user.dir") + "/uploads/profile_img/";
-	                    File directory = new File(uploadDir);
-	                    if (!directory.exists()) {
-	                        directory.mkdirs();
-	                    }
-	                    
-	                    // Save file
-	                    Path path = Paths.get(uploadDir, imageName);
-	                    Files.copy(file.getInputStream(), path, StandardCopyOption.REPLACE_EXISTING);
-	                }
 	                session.setAttribute("succMsg", "Register successfully");
 	            } else {
 	                session.setAttribute("errorMsg", "Something wrong on server");
@@ -177,6 +164,7 @@ public class HomeController {
 
 	    return "redirect:/register";
 	}
+
 
 
 //	Forgot Password Code 

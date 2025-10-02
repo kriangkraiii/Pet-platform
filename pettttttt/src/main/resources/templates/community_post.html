@@ -193,7 +193,11 @@
                  th:text="${post.description}">Post description</div>
 
             <!-- Post Image -->
-            <img class="post-image" th:src="@{${post.postImage ?: post.pet.imagePet}}" alt="Post Image"/>
+            
+<img class="post-image" 
+     th:src="${post.postImage != null ? post.postImage : '/img/pet_img/' + post.pet.imagePet}" 
+     alt="Post Image"/>
+
 
             <!-- Pet Details -->
             <div class="pet-details">
@@ -210,14 +214,7 @@
                         <strong>Breed:</strong>
                         <span th:text="${post.pet.breed}">Breed</span>
                     </div>
-                    <div class="pet-info-item">
-                        <strong>Age:</strong>
-                        <span th:text="${post.pet.age + ' years'}">Age</span>
-                    </div>
-                    <div class="pet-info-item">
-                        <strong>Color:</strong>
-                        <span th:text="${post.pet.color}">Color</span>
-                    </div>
+                    
                 </div>
                 <div th:if="${post.pet.description}" style="margin-top: 12px; padding-top: 12px; border-top: 1px solid #e3e7ed;">
                     <strong style="color: #2d3a4b;">Description:</strong>

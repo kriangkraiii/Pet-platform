@@ -1,119 +1,188 @@
 <!DOCTYPE html>
-<html lang="en" xmlns:th="http://www.thymeleaf.org" th:replace="~{base::layout(~{::section})}">
+<html lang="en" xmlns:th="http://www.thymeleaf.org"
+	th:replace="~{base::layout(~{::section})}">
 
 <head>
-	<meta charset="UTF-8" />
-	<title th:text="'Community'">Community</title>
-	<!-- CSRF meta tags -->
-	<meta name="_csrf" th:content="${_csrf?.token}" />
-	<meta name="_csrf_header" th:content="${_csrf?.headerName}" />
+<meta charset="UTF-8" />
+<title th:text="'Community'">Community</title>
+<!-- CSRF meta tags -->
+<meta name="_csrf" th:content="${_csrf?.token}" />
+<meta name="_csrf_header" th:content="${_csrf?.headerName}" />
 
-	<style>
-		/* Container */
-		.container {
-			max-width: 1100px;
-			margin: 40px auto 80px;
-			padding: 0 16px;
-		}
+<style>
+/* Container */
+.container {
+	max-width: 1100px;
+	margin: 40px auto 80px;
+	padding: 0 16px;
+}
 
-		/* Create Post Card */
-		.create-post-card {
-			background: #fff;
-			border-radius: 18px;
-			box-shadow: 0 4px 24px rgba(0, 0, 0, .12);
-			padding: 24px;
-			margin-bottom: 32px;
-			border: 1.5px solid #e3e7ed;
-		}
+/* Create Post Card */
+.create-post-card {
+	background: #fff;
+	border-radius: 18px;
+	box-shadow: 0 4px 24px rgba(0, 0, 0, .12);
+	padding: 24px;
+	margin-bottom: 32px;
+	border: 1.5px solid #e3e7ed;
+}
 
-		/* Post Grid */
-		.post-grid {
-			display: grid;
-			grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-			gap: 32px;
-			margin-top: 40px;
-		}
+/* Post Grid */
+.post-grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+	gap: 32px;
+	margin-top: 40px;
+}
 
-		/* Card */
-		.post-card .card {
-			border-radius: 16px;
-			overflow: hidden;
-			background: #fff;
-			box-shadow: 0 4px 24px rgba(0, 0, 0, .12);
-		}
+/* Card */
+.post-card .card {
+	border-radius: 16px;
+	overflow: hidden;
+	background: #fff;
+	box-shadow: 0 4px 24px rgba(0, 0, 0, .12);
+}
 
-		/* Card Image */
-		.post-card .card img.card-img-top {
-			width: 100%;
-			max-height: 320px;
-			object-fit: cover;
-		}
+/* Card Image */
+.post-card .card img.card-img-top {
+	width: 100%;
+	max-height: 320px;
+	object-fit: cover;
+}
 
-		/* Card Body */
-		.post-card .card-body {
-			padding: 16px;
-		}
+/* Card Body */
+.post-card .card-body {
+	padding: 16px;
+}
 
-		/* Post Owner */
-		.post-card .card-body .d-flex img {
-			border-radius: 50%;
-			object-fit: cover;
-		}
+/* Post Owner */
+.post-card .card-body .d-flex img {
+	border-radius: 50%;
+	object-fit: cover;
+}
 
-		/* Pet Info */
-		.pet-info {
-			background: #f8fafc;
-			padding: 12px;
-			border-radius: 8px;
-			margin-bottom: 12px;
-		}
+/* Pet Info */
+.pet-info {
+	background: #f8fafc;
+	padding: 12px;
+	border-radius: 8px;
+	margin-bottom: 12px;
+}
 
-		/* Like Button */
-		.btn-light.liked {
-			color: #ed4956;
-		}
+/* Like Button */
+.btn-light.liked {
+	color: #ed4956;
+}
 
-		.btn-light i.fas {
-			color: #ed4956;
-		}
+.btn-light i.fas {
+	color: #ed4956;
+}
 
-		/* Dropdown Menu for Post Actions */
-		.menu-toggle-btn {
-			position: absolute;
-			top: 15px;
-			right: 15px;
-			border-radius: 50%;
-			padding: 2px 8px;
-			background: #fff;
-			border: 1px solid #ccc;
-			cursor: pointer;
-		}
+/* Dropdown Menu for Post Actions */
+.menu-toggle-btn {
+	position: absolute;
+	top: 15px;
+	right: 15px;
+	border-radius: 50%;
+	padding: 2px 8px;
+	background: #fff;
+	border: 1px solid #ccc;
+	cursor: pointer;
+}
 
-		.dropdown-menu-post-actions {
-			position: absolute;
-			right: 0;
-			top: 100%;
-			background: #fff;
-			border: 1px solid #ccc;
-			border-radius: 8px;
-			z-index: 1000;
-			display: none;
-			min-width: 140px;
-			box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
-		}
+.dropdown-menu-post-actions {
+	position: absolute;
+	right: 0;
+	top: 100%;
+	background: #fff;
+	border: 1px solid #ccc;
+	border-radius: 8px;
+	z-index: 1000;
+	display: none;
+	min-width: 140px;
+	box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+}
 
-		.dropdown-menu-post-actions .dropdown-item {
-			padding: 8px 12px;
-			display: block;
-			cursor: pointer;
-			text-decoration: none;
-			color: inherit;
-		}
+.dropdown-menu-post-actions .dropdown-item {
+	padding: 8px 12px;
+	display: block;
+	cursor: pointer;
+	text-decoration: none;
+	color: inherit;
+}
 
-		.dropdown-menu-post-actions .dropdown-item:hover {
-			background: #f1f5f9;
-		}
-	</style>
+.dropdown-menu-post-actions .dropdown-item:hover {
+	background: #f1f5f9;
+}
+/* Post Image Container */
+.post-image-container {
+	position: relative;
+	width: 100%;
+	max-height: 400px;
+	overflow: hidden;
+	border-radius: 8px;
+	margin-bottom: 16px;
+}
+
+/* Responsive Post Image */
+.post-image {
+	width: 100%;
+	height: auto;
+	max-height: 400px;
+	object-fit: cover;
+	display: block;
+	border-radius: 8px;
+}
+
+/* Mobile responsiveness */
+@media ( max-width : 768px) {
+	.post-image-container {
+		max-height: 300px;
+	}
+	.post-image {
+		max-height: 300px;
+	}
+}
+
+@media ( max-width : 480px) {
+	.post-image-container {
+		max-height: 250px;
+	}
+	.post-image {
+		max-height: 250px;
+	}
+}
+
+/* Card adjustments for better mobile experience */
+@media ( max-width : 768px) {
+	.post-grid {
+		grid-template-columns: 1fr;
+		gap: 20px;
+	}
+	.container {
+		padding: 0 12px;
+	}
+}
+/* Fixed aspect ratio approach */
+.post-image-container {
+	position: relative;
+	width: 100%;
+	aspect-ratio: 4/3; /* or 16/9 for widescreen */
+	overflow: hidden;
+	border-radius: 8px;
+	margin-bottom: 16px;
+}
+
+.post-image {
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+	border-radius: 8px;
+}
+</style>
 </head>
 
 <body>
@@ -122,44 +191,38 @@
 			<h2 class="text-center mb-4" style="color: #2d3a4b;">Community</h2>
 
 			<!-- Success/Error Messages -->
-			<div th:if="${session.succMsg}" class="alert alert-success alert-dismissible fade show" role="alert">
-				<i class="fas fa-check-circle me-2"></i> <span th:text="${session.succMsg}"></span>
+			<div th:if="${session.succMsg}"
+				class="alert alert-success alert-dismissible fade show" role="alert">
+				<i class="fas fa-check-circle me-2"></i> <span
+					th:text="${session.succMsg}"></span>
 				<button type="button" class="btn-close" data-bs-dismiss="alert"></button>
 			</div>
-			<div th:if="${session.errorMsg}" class="alert alert-danger alert-dismissible fade show" role="alert">
-				<i class="fas fa-exclamation-circle me-2"></i> <span th:text="${session.errorMsg}"></span>
+			<div th:if="${session.errorMsg}"
+				class="alert alert-danger alert-dismissible fade show" role="alert">
+				<i class="fas fa-exclamation-circle me-2"></i> <span
+					th:text="${session.errorMsg}"></span>
 				<button type="button" class="btn-close" data-bs-dismiss="alert"></button>
 			</div>
 
 			<!-- Create Post Form -->
 			<div th:if="${user != null}" class="create-post-card">
 				<div class="d-flex align-items-center mb-3">
-					<img th:src="@{'/img/profile_img/' + ${user.profileImage}}" alt="Your Profile"
+					<img th:src="@{'/img/profile_img/' + ${user.profileImage}}"
+						alt="Your Profile"
 						style="width: 90px; height: 90px; margin-right: 12px; border-radius: 50%; object-fit: cover;">
 					<h4 class="m-0" style="color: #2d3a4b; font-weight: 600;">Share
 						Your Pet</h4>
 				</div>
 
-				
-				
-				
-				
-				
-				
-				
-				
-				
-				
-				
-				
-				
-				<form th:action="@{/community/create}" method="post" enctype="multipart/form-data">
-					<input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}"
-						th:value="${_csrf.token}" />
+				<form th:action="@{/community/create}" method="post"
+					enctype="multipart/form-data">
+					<input type="hidden" th:if="${_csrf != null}"
+						th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
 
 					<div class="mb-3">
 						<label for="petSelect" class="form-label fw-semibold">Select
-							Your Pet:</label> <select class="form-select" id="petSelect" name="petId" required>
+							Your Pet:</label> <select class="form-select" id="petSelect" name="petId"
+							required>
 							<option value="">Choose a pet...</option>
 							<option th:each="pet : ${userPets}" th:value="${pet.id}"
 								th:text="${pet.name + ' (' + pet.type + ')'}">Pet</option>
@@ -168,15 +231,16 @@
 
 					<div class="mb-3">
 						<label for="description" class="form-label fw-semibold">Description:</label>
-						<textarea class="form-control" id="description" name="description" rows="3"
-							placeholder="Write something about your pet..." required></textarea>
+						<textarea class="form-control" id="description" name="description"
+							rows="3" placeholder="Write something about your pet..." required></textarea>
 					</div>
 
 					<div class="mb-3">
 						<label for="postImage" class="form-label fw-semibold">Upload
-							Photo:</label> <input type="file" class="form-control" id="postImage" name="postImage"
-							accept="image/*" onchange="previewImage(event)" required> <img id="imagePreview"
-							class="image-preview" alt="Preview"
+							Photo:</label> <input type="file" class="form-control" id="postImage"
+							name="postImage" accept="image/*" onchange="previewImage(event)"
+							required> <img id="imagePreview" class="image-preview"
+							alt="Preview"
 							style="display: none; max-width: 100%; margin-top: 12px; border-radius: 10px;">
 					</div>
 
@@ -194,7 +258,8 @@
 				<p style="color: #64748b; margin-bottom: 24px;">Join our
 					community to share your pet photos and connect with other pet
 					lovers!</p>
-				<a href="/signin" class="btn btn-primary"><i class="fas fa-sign-in-alt me-2"></i>Login to Share</a>
+				<a href="/signin" class="btn btn-primary"><i
+					class="fas fa-sign-in-alt me-2"></i>Login to Share</a>
 			</div>
 		</div>
 
@@ -207,37 +272,43 @@
 						<!-- Dropdown for post actions -->
 						<div th:if="${user != null and post.user.id == user.id}"
 							class="d-inline-block position-relative">
-							<button class="btn btn-sm btn-outline-primary dropdown-toggle" type="button"
-								id="postActionsBtn" data-bs-toggle="dropdown" aria-expanded="false">Actions</button>
-							<ul class="dropdown-menu dropdown-menu-end" aria-labelledby="postActionsBtn">
+							<button class="btn btn-sm btn-outline-primary dropdown-toggle"
+								type="button" id="postActionsBtn" data-bs-toggle="dropdown"
+								aria-expanded="false">Actions</button>
+							<ul class="dropdown-menu dropdown-menu-end"
+								aria-labelledby="postActionsBtn">
 								<li>
-									<form th:action="@{'/community/post/' + ${post.id} + '/delete'}" method="post"
-										onsubmit="return confirmDelete()">
-										<input type="hidden" th:if="${_csrf != null}" th:name="${_csrf.parameterName}"
-											th:value="${_csrf.token}" />
+									<form
+										th:action="@{'/community/post/' + ${post.id} + '/delete'}"
+										method="post" onsubmit="return confirmDelete()">
+										<input type="hidden" th:if="${_csrf != null}"
+											th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
 										<button type="submit" class="dropdown-item text-danger">Delete
 											Post</button>
 									</form>
 								</li>
 								<li><a class="dropdown-item text-primary"
-										th:href="@{'/community/post/' + ${post.id} + '/edit'}">
+									th:href="@{'/community/post/' + ${post.id} + '/edit'}">
 										Update Post </a></li>
 							</ul>
 						</div>
 
 						<!-- Post Image -->
-						<img th:src="@{${post.postImage}}" alt="Post Image" class="card-img-top">
+						<div class="post-image-container">
+							<img th:src="@{'/uploads/posts/' + ${post.postImage}}"
+								alt="Post Image" class="post-image">
+						</div>
 
 						<div class="card-body">
 							<!-- Post Owner -->
 							<div class="d-flex align-items-center mb-3">
 								<img th:src="@{'/img/profile_img/' + ${user.profileImage}}"
-								     alt="User Profile" 
-								     style="width: 50px; height: 50px; margin-right: 12px; border-radius: 50%; object-fit: cover;">
+									alt="User Profile"
+									style="width: 50px; height: 50px; margin-right: 12px; border-radius: 50%; object-fit: cover;">
 								<div>
 									<h5 class="mb-0" th:text="${post.user.name}">User Name</h5>
 									<small class="text-muted"
-									       th:text="${#temporals.format(post.createdAt, 'dd/MM/yyyy HH:mm')}">Date</small>
+										th:text="${#temporals.format(post.createdAt, 'dd/MM/yyyy HH:mm')}">Date</small>
 								</div>
 							</div>
 
@@ -247,28 +318,30 @@
 								Description</p>
 
 							<!-- Pet Info -->
-							<div class="pet-info d-flex align-items-center" 
-							     style="background: #f8fafc; padding: 12px; border-radius: 8px; margin: 12px 0;">
-								<img th:src="@{'/img/pet_img/' + ${post.pet.imagePet}}" 
-								     alt="Pet Image"
-								     style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover; margin-right: 12px;">
+							<div class="pet-info d-flex align-items-center"
+								style="background: #f8fafc; padding: 12px; border-radius: 8px; margin: 12px 0;">
+								<img th:src="@{'/img/pet_img/' + ${post.pet.imagePet}}"
+									alt="Pet Image"
+									style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover; margin-right: 12px;">
 								<div>
 									<strong th:text="${post.pet.name}">Pet Name</strong>
 									<div class="text-muted small"
-									     th:text="${post.pet.type + ' • ' + post.pet.breed}">
-									     Pet Info
-									</div>
+										th:text="${post.pet.type + ' • ' + post.pet.breed}">Pet
+										Info</div>
 								</div>
 							</div>
 
 
 							<!-- Like Button -->
-							<button type="button" th:id="'like-btn-' + ${post.id}" class="btn btn-light"
+							<button type="button" th:id="'like-btn-' + ${post.id}"
+								class="btn btn-light"
 								th:classappend="${post.likedByCurrentUser} ? ' liked' : ''"
 								th:onclick="'toggleLike(' + ${post.id} + ')'"
 								style="border: 1px solid #e5e7eb; margin-top: 8px;">
-								<i class="fa-heart" th:classappend="${post.likedByCurrentUser} ? ' fas' : ' far'"></i>
-								<span th:id="'like-count-' + ${post.id}" th:text="${post.likeCount}">0</span>
+								<i class="fa-heart"
+									th:classappend="${post.likedByCurrentUser} ? ' fas' : ' far'"></i>
+								<span th:id="'like-count-' + ${post.id}"
+									th:text="${post.likeCount}">0</span>
 							</button>
 
 							<!-- Actions -->
@@ -284,7 +357,8 @@
 			</div>
 
 			<!-- No posts -->
-			<div th:if="${#lists.isEmpty(communityPosts)}" class="text-center py-5">
+			<div th:if="${#lists.isEmpty(communityPosts)}"
+				class="text-center py-5">
 				<i class="fas fa-paw fa-3x text-muted mb-3"></i>
 				<h4 class="text-muted">No posts yet</h4>
 				<p class="text-muted">Be the first to share your pet with the
