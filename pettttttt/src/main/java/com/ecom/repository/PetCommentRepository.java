@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.*;
 import org.springframework.data.repository.query.Param;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface PetCommentRepository extends JpaRepository<PetComment, Long> {
 
@@ -32,4 +33,8 @@ public interface PetCommentRepository extends JpaRepository<PetComment, Long> {
     @Modifying
     @Query("DELETE FROM PetComment c WHERE c.pet = :pet")
     void deleteByPet(@Param("pet") Pet pet);
+ // Find comment by ID and user ID (for edit permission check)
+    @Query("SELECT c FROM PetComment c WHERE c.id = :commentId AND c.user.id = :userId")
+    Optional<PetComment> findByIdAndUserId(@Param("commentId") Long commentId, @Param("userId") Integer userId);
+
 }

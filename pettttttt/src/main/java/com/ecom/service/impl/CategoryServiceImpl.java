@@ -63,6 +63,7 @@ public class CategoryServiceImpl implements CategoryService {
 		Pageable pageable = PageRequest.of(pageNo, pageSize);
 		return categoryRepository.findAll(pageable);
 	}
+	
 	@Override
 	public Integer getCountActiveCategory() {
 	    return getAllActiveCategory().size();
@@ -79,5 +80,4 @@ public class CategoryServiceImpl implements CategoryService {
 	    // Return empty list for now - you can implement category labels later
 	    return new ArrayList<>();
 	}
-
 }

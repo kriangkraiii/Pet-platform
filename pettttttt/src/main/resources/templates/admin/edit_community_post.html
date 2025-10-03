@@ -61,7 +61,7 @@
                             <div th:if="${post.postImage != null and !post.postImage.empty}" class="mb-3">
                                 <label class="form-label"><strong>Current Image:</strong></label>
                                 <div>
-                                    <img th:src="${post.postImage}" class="img-thumbnail" style="max-width: 300px;">
+                                    <img th:src="@{'/uploads/posts/' + ${post.postImage}}" class="img-thumbnail" style="max-width: 300px;">
                                 </div>
                             </div>
 

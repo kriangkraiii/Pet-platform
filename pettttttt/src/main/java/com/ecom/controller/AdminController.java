@@ -168,41 +168,48 @@ public class AdminController {
 	// Update existing methods to include logging
 	@PostMapping("/saveCategory")
 	public String saveCategory(@ModelAttribute Category category, @RequestParam("file") MultipartFile file,
-	                          HttpSession session, Principal p, HttpServletRequest request) throws IOException {
-	    
+	        HttpSession session, Principal p) throws IOException {
+
 	    UserDtls admin = commonUtil.getLoggedInUserDetails(p);
 	    String ipAddress = getClientIpAddress(request);
-	    
-	    String imageName = file != null ? file.getOriginalFilename() : "default.jpg";
-	    category.setImageName(imageName);
 
 	    Boolean existCategory = categoryService.existCategory(category.getName());
 
 	    if (existCategory) {
-	        session.setAttribute("errorMsg", "Category Name already exists");
+	        session.setAttribute("errorMsg", "Category name already exists");
 	        adminLogService.logAction(admin.getEmail(), admin.getName(), 
 	                                "CREATE_CATEGORY_FAILED", 
-	                                "Failed to create category: " + category.getName() + " (already exists)", 
+	                                "Failed to create category: " + category.getName() + " (name exists)", 
 	                                ipAddress);
 	    } else {
+	        String imageName = file.isEmpty() ? "default.jpg" : file.getOriginalFilename();
+	        category.setImageName(imageName);
+
 	        Category saveCategory = categoryService.saveCategory(category);
 
-	        if (ObjectUtils.isEmpty(saveCategory)) {
-	            session.setAttribute("errorMsg", "Not saved ! internal server error");
-	            adminLogService.logAction(admin.getEmail(), admin.getName(), 
-	                                    "CREATE_CATEGORY_FAILED", 
-	                                    "Failed to create category: " + category.getName() + " (server error)", 
-	                                    ipAddress);
-	        } else {
-	            File saveFile = new ClassPathResource("static/img").getFile();
-	            Path path = Paths.get(saveFile.getAbsolutePath() + File.separator + "category_img" + File.separator
-	                    + file.getOriginalFilename());
-	            Files.copy(file.getInputStream(), path, StandardCopyOption.REPLACE_EXISTING);
+	        if (!ObjectUtils.isEmpty(saveCategory)) {
+	            if (!file.isEmpty()) {
+	                // Create external upload directory
+	                String uploadDir = System.getProperty("user.dir") + "/uploads/category_img/";
+	                File uploadFolder = new File(uploadDir);
+	                if (!uploadFolder.exists()) {
+	                    uploadFolder.mkdirs();
+	                }
 
-	            session.setAttribute("succMsg", "Saved successfully");
+	                Path path = Paths.get(uploadDir + file.getOriginalFilename());
+	                Files.copy(file.getInputStream(), path, StandardCopyOption.REPLACE_EXISTING);
+	            }
+
+	            session.setAttribute("succMsg", "Category saved successfully");
 	            adminLogService.logAction(admin.getEmail(), admin.getName(), 
 	                                    "CREATE_CATEGORY", 
 	                                    "Created new category: " + category.getName(), 
+	                                    ipAddress);
+	        } else {
+	            session.setAttribute("errorMsg", "Something wrong on server");
+	            adminLogService.logAction(admin.getEmail(), admin.getName(), 
+	                                    "CREATE_CATEGORY_FAILED", 
+	                                    "Failed to create category: " + category.getName() + " (server error)", 
 	                                    ipAddress);
 	        }
 	    }
@@ -377,6 +384,7 @@ public class AdminController {
 	    String ipAddress = getClientIpAddress(request);
 
 	    Category oldCategory = categoryService.getCategoryById(category.getId());
+
 	    String imageName = file.isEmpty() ? oldCategory.getImageName() : file.getOriginalFilename();
 
 	    if (!ObjectUtils.isEmpty(category)) {
@@ -389,9 +397,14 @@ public class AdminController {
 
 	    if (!ObjectUtils.isEmpty(updateCategory)) {
 	        if (!file.isEmpty()) {
-	            File saveFile = new ClassPathResource("static/img").getFile();
-	            Path path = Paths.get(saveFile.getAbsolutePath() + File.separator + "category_img" + File.separator
-	                    + file.getOriginalFilename());
+	            // Create external upload directory
+	            String uploadDir = System.getProperty("user.dir") + "/uploads/category_img/";
+	            File uploadFolder = new File(uploadDir);
+	            if (!uploadFolder.exists()) {
+	                uploadFolder.mkdirs();
+	            }
+
+	            Path path = Paths.get(uploadDir + file.getOriginalFilename());
 	            Files.copy(file.getInputStream(), path, StandardCopyOption.REPLACE_EXISTING);
 	        }
 
@@ -411,6 +424,7 @@ public class AdminController {
 	    return "redirect:/admin/loadEditCategory/" + category.getId();
 	}
 
+
 	@PostMapping("/saveProduct")
 	public String saveProduct(@ModelAttribute Product product, @RequestParam("file") MultipartFile image,
 	        HttpSession session, Principal p) throws IOException {
@@ -425,10 +439,17 @@ public class AdminController {
 	    Product saveProduct = productService.saveProduct(product);
 
 	    if (!ObjectUtils.isEmpty(saveProduct)) {
-	        File saveFile = new ClassPathResource("static/img").getFile();
-	        Path path = Paths.get(saveFile.getAbsolutePath() + File.separator + "product_img" + File.separator
-	                + image.getOriginalFilename());
-	        Files.copy(image.getInputStream(), path, StandardCopyOption.REPLACE_EXISTING);
+	        if (!image.isEmpty()) {
+	            // Create external upload directory
+	            String uploadDir = System.getProperty("user.dir") + "/uploads/product_img/";
+	            File uploadFolder = new File(uploadDir);
+	            if (!uploadFolder.exists()) {
+	                uploadFolder.mkdirs();
+	            }
+
+	            Path path = Paths.get(uploadDir + image.getOriginalFilename());
+	            Files.copy(image.getInputStream(), path, StandardCopyOption.REPLACE_EXISTING);
+	        }
 
 	        session.setAttribute("succMsg", "Product Saved Success");
 	        adminLogService.logAction(admin.getEmail(), admin.getName(), 
@@ -708,9 +729,14 @@ public class AdminController {
 
 	    if (!ObjectUtils.isEmpty(saveUser)) {
 	        if (!file.isEmpty()) {
-	            File saveFile = new ClassPathResource("static/img").getFile();
-	            Path path = Paths.get(saveFile.getAbsolutePath() + File.separator + "profile_img" + File.separator
-	                    + file.getOriginalFilename());
+	            // Create external upload directory
+	            String uploadDir = System.getProperty("user.dir") + "/uploads/profile_img/";
+	            File uploadFolder = new File(uploadDir);
+	            if (!uploadFolder.exists()) {
+	                uploadFolder.mkdirs();
+	            }
+
+	            Path path = Paths.get(uploadDir + file.getOriginalFilename());
 	            Files.copy(file.getInputStream(), path, StandardCopyOption.REPLACE_EXISTING);
 	        }
 	        session.setAttribute("succMsg", "Register successfully");

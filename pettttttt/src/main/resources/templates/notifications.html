@@ -140,9 +140,8 @@
 				th:onclick="'openPost(' + ${notification.post.id} + ', ' + ${notification.id} + ')'">
 
 				<div class="notification-content">
-					<img class="notification-avatar"
-						th:src="@{${notification.actor.profileImage ?: '/img/profile_img/default.jpg'}}"
-						alt="User Avatar" />
+
+
 
 					<div class="notification-details">
 						<div class="notification-message" th:text="${notification.message}">Notification message</div>

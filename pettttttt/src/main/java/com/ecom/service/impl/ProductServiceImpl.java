@@ -93,48 +93,49 @@ public class ProductServiceImpl implements ProductService {
 		Product product = productRepository.findById(id).orElse(null);
 		return product;
 	}
-
 	@Override
 	public Product updateProduct(Product product, MultipartFile image) {
 
-		Product dbProduct = getProductById(product.getId());
+	    Product dbProduct = getProductById(product.getId());
 
-		String imageName = image.isEmpty() ? dbProduct.getImage() : image.getOriginalFilename();
+	    String imageName = image.isEmpty() ? dbProduct.getImage() : image.getOriginalFilename();
 
-		dbProduct.setTitle(product.getTitle());
-		dbProduct.setDescription(product.getDescription());
-		dbProduct.setCategory(product.getCategory());
-		dbProduct.setPrice(product.getPrice());
-		dbProduct.setStock(product.getStock());
-		dbProduct.setImage(imageName);
-		dbProduct.setIsActive(product.getIsActive());
-		dbProduct.setDiscount(product.getDiscount());
+	    dbProduct.setTitle(product.getTitle());
+	    dbProduct.setDescription(product.getDescription());
+	    dbProduct.setCategory(product.getCategory());
+	    dbProduct.setPrice(product.getPrice());
+	    dbProduct.setStock(product.getStock());
+	    dbProduct.setImage(imageName);
+	    dbProduct.setIsActive(product.getIsActive());
+	    dbProduct.setDiscount(product.getDiscount());
 
-		// 5=100*(5/100); 100-5=95
-		Double disocunt = product.getPrice() * (product.getDiscount() / 100.0);
-		Double discountPrice = product.getPrice() - disocunt;
-		dbProduct.setDiscountPrice(discountPrice);
+	    // Calculate discount price
+	    Double discount = product.getPrice() * (product.getDiscount() / 100.0);
+	    Double discountPrice = product.getPrice() - discount;
+	    dbProduct.setDiscountPrice(discountPrice);
 
-		Product updateProduct = productRepository.save(dbProduct);
+	    Product updateProduct = productRepository.save(dbProduct);
 
-		if (!ObjectUtils.isEmpty(updateProduct)) {
+	    if (!ObjectUtils.isEmpty(updateProduct)) {
+	        if (!image.isEmpty()) {
+	            try {
+	                // Create external upload directory
+	                String uploadDir = System.getProperty("user.dir") + "/uploads/product_img/";
+	                File uploadFolder = new File(uploadDir);
+	                if (!uploadFolder.exists()) {
+	                    uploadFolder.mkdirs();
+	                }
 
-			if (!image.isEmpty()) {
+	                Path path = Paths.get(uploadDir + image.getOriginalFilename());
+	                Files.copy(image.getInputStream(), path, StandardCopyOption.REPLACE_EXISTING);
 
-				try {
-					File saveFile = new ClassPathResource("static/img").getFile();
-
-					Path path = Paths.get(saveFile.getAbsolutePath() + File.separator + "product_img" + File.separator
-							+ image.getOriginalFilename());
-					Files.copy(image.getInputStream(), path, StandardCopyOption.REPLACE_EXISTING);
-
-				} catch (Exception e) {
-					e.printStackTrace();
-				}
-			}
-			return product;
-		}
-		return null;
+	            } catch (Exception e) {
+	                e.printStackTrace();
+	            }
+	        }
+	        return updateProduct;
+	    }
+	    return null;
 	}
 
 	@Override

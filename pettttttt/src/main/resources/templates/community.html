@@ -135,23 +135,19 @@
 }
 
 /* Mobile responsiveness */
-@media ( max-width : 768px) {
+@media (max-width: 768px) {
 	.post-image-container {
-		max-height: 300px;
-	}
-	.post-image {
-		max-height: 300px;
+		max-height: 200px;
+		aspect-ratio: 16/9;
 	}
 }
 
-@media ( max-width : 480px) {
+@media (max-width: 480px) {
 	.post-image-container {
-		max-height: 250px;
-	}
-	.post-image {
-		max-height: 250px;
+		max-height: 180px;
 	}
 }
+
 
 /* Card adjustments for better mobile experience */
 @media ( max-width : 768px) {
@@ -167,7 +163,8 @@
 .post-image-container {
 	position: relative;
 	width: 100%;
-	aspect-ratio: 4/3; /* or 16/9 for widescreen */
+	aspect-ratio: 3/2; /* Changed from 4/3 to make it shorter */
+	max-height: 250px; /* Added maximum height limit */
 	overflow: hidden;
 	border-radius: 8px;
 	margin-bottom: 16px;
@@ -182,12 +179,14 @@
 	object-fit: cover;
 	border-radius: 8px;
 }
+
 </style>
 </head>
 
 <body>
 	<section>
 		<div class="container">
+		<br>
 			<h2 class="text-center mb-4" style="color: #2d3a4b;">Community</h2>
 
 			<!-- Success/Error Messages -->
@@ -204,51 +203,57 @@
 				<button type="button" class="btn-close" data-bs-dismiss="alert"></button>
 			</div>
 
-			<!-- Create Post Form -->
-			<div th:if="${user != null}" class="create-post-card">
-				<div class="d-flex align-items-center mb-3">
-					<img th:src="@{'/img/profile_img/' + ${user.profileImage}}"
-						alt="Your Profile"
-						style="width: 90px; height: 90px; margin-right: 12px; border-radius: 50%; object-fit: cover;">
-					<h4 class="m-0" style="color: #2d3a4b; font-weight: 600;">Share
-						Your Pet</h4>
-				</div>
+		<!-- Create Post Form -->
+<div th:if="${user != null}" class="create-post-card">
+<div class="d-flex align-items-center mb-2">
+	<img th:src="@{'/img/profile_img/' + ${user.profileImage}}"
+		alt="Your Profile"
+		style="width: 60px; height: 60px; margin-right: 10px; border-radius: 50%; object-fit: cover;">
+	<div>
+		<h5 class="mb-0" th:text="${user.name}">User Name</h5>
+	</div>
+</div>
 
-				<form th:action="@{/community/create}" method="post"
-					enctype="multipart/form-data">
-					<input type="hidden" th:if="${_csrf != null}"
-						th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
 
-					<div class="mb-3">
-						<label for="petSelect" class="form-label fw-semibold">Select
-							Your Pet:</label> <select class="form-select" id="petSelect" name="petId"
-							required>
-							<option value="">Choose a pet...</option>
-							<option th:each="pet : ${userPets}" th:value="${pet.id}"
-								th:text="${pet.name + ' (' + pet.type + ')'}">Pet</option>
-						</select>
-					</div>
+	<form th:action="@{/community/create}" method="post"
+		enctype="multipart/form-data">
+		<input type="hidden" th:if="${_csrf != null}"
+			th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
 
-					<div class="mb-3">
-						<label for="description" class="form-label fw-semibold">Description:</label>
-						<textarea class="form-control" id="description" name="description"
-							rows="3" placeholder="Write something about your pet..." required></textarea>
-					</div>
-
-					<div class="mb-3">
-						<label for="postImage" class="form-label fw-semibold">Upload
-							Photo:</label> <input type="file" class="form-control" id="postImage"
-							name="postImage" accept="image/*" onchange="previewImage(event)"
-							required> <img id="imagePreview" class="image-preview"
-							alt="Preview"
-							style="display: none; max-width: 100%; margin-top: 12px; border-radius: 10px;">
-					</div>
-
-					<button type="submit" class="btn btn-primary">
-						<i class="fas fa-share me-2"></i>Share Post
-					</button>
-				</form>
+		<div class="row">
+			<div class="col-md-6 mb-2">
+				<label for="petSelect" class="form-label">Pet:</label> 
+				<select class="form-select form-select-sm" id="petSelect" name="petId" required>
+					<option value="">Choose a pet...</option>
+					<option th:each="pet : ${userPets}" th:value="${pet.id}"
+						th:text="${pet.name + ' (' + pet.type + ')'}">Pet</option>
+				</select>
 			</div>
+
+			<div class="col-md-6 mb-2">
+				<label for="postImage" class="form-label">Photo:</label> 
+				<input type="file" class="form-control form-control-sm" id="postImage"
+					name="postImage" accept="image/*" onchange="previewImage(event)" required>
+			</div>
+		</div>
+
+		<div class="mb-2">
+			<textarea class="form-control" id="description" name="description"
+				rows="2" placeholder="Write something about your pet..." required></textarea>
+		</div>
+
+		<img id="imagePreview" class="image-preview" alt="Preview"
+			style="display: none; max-width: 200px; max-height: 120px; margin-bottom: 10px; border-radius: 8px; object-fit: cover; border: 1px solid #e3e7ed;">
+
+<button type="submit" class="btn btn-primary">
+	<i class="fas fa-share me-1"></i>Post
+</button>
+
+	</form>
+	<br>
+	<br>
+</div>
+
 
 			<!-- Prompt to login -->
 			<div th:if="${user == null}" class="create-post-card text-center">

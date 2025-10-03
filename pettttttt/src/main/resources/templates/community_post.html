@@ -11,54 +11,6 @@
             padding: 0 16px;
         }
 
-        .post-header {
-            background: #fff;
-            border-radius: 18px;
-            box-shadow: 0 4px 24px rgba(0, 0, 0, 0.12);
-            padding: 24px;
-            margin-bottom: 24px;
-            border: 1.5px solid #e3e7ed;
-        }
-
-        .header-content {
-            display: flex;
-            align-items: center;
-            gap: 20px;
-        }
-
-        .user-profile, .pet-profile {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            text-align: center;
-        }
-
-        .user-profile img, .pet-profile img {
-            width: 80px;
-            height: 80px;
-            border-radius: 50%;
-            object-fit: cover;
-            margin-bottom: 8px;
-            border: 3px solid #e3e7ed;
-        }
-
-        .profile-name {
-            font-weight: 600;
-            color: #2d3a4b;
-            margin: 0;
-        }
-
-        .profile-label {
-            font-size: 0.8rem;
-            color: #5a6270;
-            margin-top: 4px;
-        }
-
-        .arrow-icon {
-            font-size: 2rem;
-            color: #94a3b8;
-        }
-
         .post-card {
             background: #fff;
             border-radius: 18px;
@@ -66,6 +18,53 @@
             padding: 24px;
             margin-bottom: 24px;
             border: 1.5px solid #e3e7ed;
+        }
+
+        .post-header {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin-bottom: 20px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid #eaeef4;
+        }
+
+        .user-profile, .pet-profile {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .user-profile img, .pet-profile img {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid #e3e7ed;
+        }
+
+        .profile-info {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .profile-name {
+            font-weight: 600;
+            color: #2d3a4b;
+            margin: 0;
+            font-size: 0.95rem;
+        }
+
+        .profile-label {
+            font-size: 0.8rem;
+            color: #5a6270;
+            margin-top: 2px;
+        }
+
+        .arrow-icon {
+            font-size: 1.2rem;
+            color: #94a3b8;
+            margin: 0 8px;
         }
 
         .post-image {
@@ -141,14 +140,15 @@
         }
 
         @media (max-width: 768px) {
-            .header-content {
+            .post-header {
                 flex-direction: column;
-                gap: 16px;
+                align-items: flex-start;
+                gap: 12px;
             }
             
             .arrow-icon {
                 transform: rotate(90deg);
-                font-size: 1.5rem;
+                font-size: 1rem;
             }
         }
     </style>
@@ -156,14 +156,17 @@
 <body>
 <section>
     <div class="post-container">
-        <!-- Post Header with User and Pet Profiles -->
-        <div class="post-header">
-            <div class="header-content">
+        <!-- Post Content -->
+        <div class="post-card">
+            <!-- Post Header with User and Pet Profiles -->
+            <div class="post-header">
                 <!-- User Profile -->
                 <div class="user-profile">
                     <img th:src="@{${post.user.profileImage ?: '/img/profile_img/default.jpg'}}" alt="User Profile">
-                    <h5 class="profile-name" th:text="${post.user.name}">User Name</h5>
-                    <div class="profile-label">Owner</div>
+                    <div class="profile-info">
+                        <div class="profile-name" th:text="${post.user.name}">User Name</div>
+                        <div class="profile-label">Owner</div>
+                    </div>
                 </div>
 
                 <!-- Arrow -->
@@ -174,14 +177,13 @@
                 <!-- Pet Profile -->
                 <div class="pet-profile">
                     <img th:src="@{${post.pet.imagePet}}" alt="Pet Profile">
-                    <h5 class="profile-name" th:text="${post.pet.name}">Pet Name</h5>
-                    <div class="profile-label" th:text="${post.pet.type}">Pet Type</div>
+                    <div class="profile-info">
+                        <div class="profile-name" th:text="${post.pet.name}">Pet Name</div>
+                        <div class="profile-label" th:text="${post.pet.type}">Pet Type</div>
+                    </div>
                 </div>
             </div>
-        </div>
 
-        <!-- Post Content -->
-        <div class="post-card">
             <!-- Post Meta Info -->
             <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 16px; color: #5a6270;">
                 <i class="fas fa-clock"></i>
@@ -193,11 +195,9 @@
                  th:text="${post.description}">Post description</div>
 
             <!-- Post Image -->
-            
-<img class="post-image" 
-     th:src="${post.postImage != null ? post.postImage : '/img/pet_img/' + post.pet.imagePet}" 
-     alt="Post Image"/>
-
+            <img class="post-image" 
+                 th:src="${post.postImage != null ? '/uploads/posts/' + post.postImage : '/uploads/pet_img/' + post.pet.imagePet}" 
+                 alt="Post Image"/>
 
             <!-- Pet Details -->
             <div class="pet-details">
@@ -214,7 +214,6 @@
                         <strong>Breed:</strong>
                         <span th:text="${post.pet.breed}">Breed</span>
                     </div>
-                    
                 </div>
                 <div th:if="${post.pet.description}" style="margin-top: 12px; padding-top: 12px; border-top: 1px solid #e3e7ed;">
                     <strong style="color: #2d3a4b;">Description:</strong>

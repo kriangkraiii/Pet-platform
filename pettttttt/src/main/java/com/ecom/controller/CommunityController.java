@@ -34,8 +34,12 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.security.Principal;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 
 @Controller
@@ -76,32 +80,42 @@ public class CommunityController {
 		}
 		model.addAttribute("countCart", 0);
 	}
-
 	@GetMapping("/community")
-	public String communityPage(Model model, Principal principal) {
-		List<CommunityPost> posts = communityPostRepository.findAllByOrderByCreatedAtDesc();
-		UserDtls currentUser = null;
+	public String communityPage(Model model, Principal principal, HttpSession session) {
+	    // Add success/error message handling at the beginning
+	    if (session.getAttribute("succMsg") != null) {
+	        model.addAttribute("succMsg", session.getAttribute("succMsg"));
+	        session.removeAttribute("succMsg");
+	    }
+	    if (session.getAttribute("errorMsg") != null) {
+	        model.addAttribute("errorMsg", session.getAttribute("errorMsg"));
+	        session.removeAttribute("errorMsg");
+	    }
 
-		// ดึงข้อมูลผู้ใช้ปัจจุบัน (ถ้ามีการล็อกอิน)
-		if (principal != null) {
-			currentUser = userService.getUserByEmail(principal.getName());
-			List<Pet> userPets = petService.getPetsByOwner(currentUser);
-			model.addAttribute("userPets", userPets);
-		}
+	    List<CommunityPost> posts = communityPostRepository.findAllByOrderByCreatedAtDesc();
+	    UserDtls currentUser = null;
 
-		// นับจำนวน like และเช็กว่า user ปัจจุบันกด like โพสต์ไหนบ้าง
-		for (CommunityPost post : posts) {
-			long likeCount = postLikeRepository.countByPost(post);
-			boolean likedByCurrentUser = (currentUser != null
-					&& postLikeRepository.existsByUserAndPost(currentUser, post));
+	    // ดึงข้อมูลผู้ใช้ปัจจุบัน (ถ้ามีการล็อกอิน)
+	    if (principal != null) {
+	        currentUser = userService.getUserByEmail(principal.getName());
+	        List<Pet> userPets = petService.getPetsByOwner(currentUser);
+	        model.addAttribute("userPets", userPets);
+	    }
 
-			post.setLikeCount(likeCount);
-			post.setLikedByCurrentUser(likedByCurrentUser);
-		}
+	    // นับจำนวน like และเช็กว่า user ปัจจุบันกด like โพสต์ไหนบ้าง
+	    for (CommunityPost post : posts) {
+	        long likeCount = postLikeRepository.countByPost(post);
+	        boolean likedByCurrentUser = (currentUser != null
+	                && postLikeRepository.existsByUserAndPost(currentUser, post));
 
-		model.addAttribute("communityPosts", posts);
-		return "community";
+	        post.setLikeCount(likeCount);
+	        post.setLikedByCurrentUser(likedByCurrentUser);
+	    }
+
+	    model.addAttribute("communityPosts", posts);
+	    return "community";
 	}
+
 
 	/*
 	@PostMapping("/community/create")
@@ -179,7 +193,6 @@ public class CommunityController {
 	        if (postImage != null && !postImage.isEmpty()) {
 	            String fileName = System.currentTimeMillis() + "_" + postImage.getOriginalFilename();
 	            
-	            // Save to external uploads directory like pet images
 	            String uploadDir = System.getProperty("user.dir") + "/uploads/posts/";
 	            File uploadFolder = new File(uploadDir);
 	            if (!uploadFolder.exists()) {
@@ -189,7 +202,8 @@ public class CommunityController {
 	            Path path = Paths.get(uploadDir, fileName);
 	            Files.copy(postImage.getInputStream(), path, StandardCopyOption.REPLACE_EXISTING);
 
-	            postImagePath = "/upload/posts/" + fileName;  // Store just the filename
+	            // เก็บเฉพาะชื่อไฟล์ ไม่ใส่ path
+	            postImagePath = fileName;
 	        }
 
 	        CommunityPost newPost = new CommunityPost();
@@ -209,6 +223,7 @@ public class CommunityController {
 
 	    return "redirect:/community";
 	}
+
 
     
 	
@@ -299,7 +314,16 @@ public class CommunityController {
 	}
 
 	@GetMapping("/community/pet/{petId}")
-	public String petDetails(@PathVariable int petId, Model model, Principal principal) {
+	public String petDetails(@PathVariable int petId, Model model, Principal principal, HttpSession session) {
+	    // Handle messages
+	    if (session.getAttribute("succMsg") != null) {
+	        model.addAttribute("succMsg", session.getAttribute("succMsg"));
+	        session.removeAttribute("succMsg");
+	    }
+	    if (session.getAttribute("errorMsg") != null) {
+	        model.addAttribute("errorMsg", session.getAttribute("errorMsg"));
+	        session.removeAttribute("errorMsg");
+	    }
 
 		// ดึงข้อมูลสัตว์เลี้ยงจาก ID
 		Pet pet = petService.getPetById(petId);
@@ -323,6 +347,84 @@ public class CommunityController {
 		model.addAttribute("postsCount", petPosts != null ? petPosts.size() : 0);
 
 		return "community_pet";
+	}
+	@PostMapping("/community/comment/{commentId}/edit")
+	@ResponseBody
+	public Map<String, Object> editComment(
+	        @PathVariable Long commentId,
+	        @RequestParam String content,
+	        Principal principal) {
+	    
+	    Map<String, Object> response = new HashMap<>();
+	    
+	    if (principal == null) {
+	        response.put("success", false);
+	        response.put("message", "Please login to edit comments");
+	        return response;
+	    }
+	    
+	    UserDtls currentUser = userService.getUserByEmail(principal.getName());
+	    
+	    // Only comment owner can edit
+	    Optional<PetComment> commentOpt = petCommentRepository.findByIdAndUserId(commentId, currentUser.getId());
+	    
+	    if (!commentOpt.isPresent()) {
+	        response.put("success", false);
+	        response.put("message", "You can only edit your own comments");
+	        return response;
+	    }
+	    
+	    PetComment comment = commentOpt.get();
+	    
+	    if (content == null || content.trim().isEmpty()) {
+	        response.put("success", false);
+	        response.put("message", "Comment content cannot be empty");
+	        return response;
+	    }
+	    
+	    // Update comment
+	    comment.setContent(content.trim());
+	    comment.setUpdatedAt(LocalDateTime.now());
+	    comment.setEdited(true);
+	    
+	    petCommentRepository.save(comment);
+	    
+	    response.put("success", true);
+	    response.put("message", "Comment updated successfully");
+	    response.put("content", comment.getContent());
+	    response.put("updatedAt", comment.getUpdatedAt().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")));
+	    
+	    return response;
+	}
+
+	@GetMapping("/community/comment/{commentId}/edit")
+	@ResponseBody
+	public Map<String, Object> getCommentForEdit(
+	        @PathVariable Long commentId,
+	        Principal principal) {
+	    
+	    Map<String, Object> response = new HashMap<>();
+	    
+	    if (principal == null) {
+	        response.put("success", false);
+	        response.put("message", "Please login");
+	        return response;
+	    }
+	    
+	    UserDtls currentUser = userService.getUserByEmail(principal.getName());
+	    Optional<PetComment> commentOpt = petCommentRepository.findByIdAndUserId(commentId, currentUser.getId());
+	    
+	    if (!commentOpt.isPresent()) {
+	        response.put("success", false);
+	        response.put("message", "Comment not found or you don't have permission");
+	        return response;
+	    }
+	    
+	    PetComment comment = commentOpt.get();
+	    response.put("success", true);
+	    response.put("content", comment.getContent());
+	    
+	    return response;
 	}
 
 	@GetMapping("/community/pet/{petId}/comments")
@@ -378,7 +480,16 @@ public class CommunityController {
 	}
 
 	@GetMapping("/community/post/{postId}/comments")
-	public String postCommentFeed(@PathVariable Long postId, Model model, Principal principal) {
+	public String postCommentFeed(@PathVariable Long postId, Model model, Principal principal ,HttpSession session) {
+		 // Handle messages
+	    if (session.getAttribute("succMsg") != null) {
+	        model.addAttribute("succMsg", session.getAttribute("succMsg"));
+	        session.removeAttribute("succMsg");
+	    }
+	    if (session.getAttribute("errorMsg") != null) {
+	        model.addAttribute("errorMsg", session.getAttribute("errorMsg"));
+	        session.removeAttribute("errorMsg");
+	    }
 		// ดึงโพสต์จากฐานข้อมูล
 		CommunityPost post = communityPostRepository.findById(postId).orElse(null);
 		if (post == null) {
@@ -498,18 +609,18 @@ public class CommunityController {
 	    // อัปเดตรูปภาพโดยเขียนลง classpath: static/upload/posts
 	    if (postImage != null && !postImage.isEmpty()) {
 	        String fileName = java.util.UUID.randomUUID() + "_" + postImage.getOriginalFilename();
-
-	        File staticDir = new org.springframework.core.io.ClassPathResource("static").getFile();
-	        File uploadDir = new File(staticDir, "upload" + File.separator + "posts");
-
-	        if (!uploadDir.exists()) {
-	            uploadDir.mkdirs();
+	        
+	        String uploadDir = System.getProperty("user.dir") + "/uploads/posts/";
+	        File uploadFolder = new File(uploadDir);
+	        if (!uploadFolder.exists()) {
+	            uploadFolder.mkdirs();
 	        }
 
-	        Path path = Paths.get(uploadDir.getAbsolutePath() + File.separator + fileName);
+	        Path path = Paths.get(uploadDir, fileName);
 	        Files.copy(postImage.getInputStream(), path, StandardCopyOption.REPLACE_EXISTING);
 
-	        post.setPostImage("/upload/posts/" + fileName);
+	        // เก็บเฉพาะชื่อไฟล์
+	        post.setPostImage(fileName);
 	    }
 
 	    communityPostRepository.save(post);
@@ -582,6 +693,53 @@ public class CommunityController {
 
 		session.setAttribute("succMsg", "Comment added successfully!");
 		return "redirect:/community/post/" + postId + "/comments#comments";
+	}
+	@PostMapping("/community/post/{postId}/comment")
+	@ResponseBody
+	public Map<String, Object> addCommentAjax(@PathVariable Long postId, 
+	                                          @RequestParam("content") String content,
+	                                          Principal principal) {
+	    Map<String, Object> response = new HashMap<>();
+	    
+	    if (principal == null) {
+	        response.put("success", false);
+	        response.put("message", "Please login to comment");
+	        return response;
+	    }
+	    
+	    content = content == null ? "" : content.trim();
+	    if (content.isEmpty()) {
+	        response.put("success", false);
+	        response.put("message", "Comment cannot be empty");
+	        return response;
+	    }
+
+	    CommunityPost post = communityPostRepository.findById(postId).orElse(null);
+	    if (post == null) {
+	        response.put("success", false);
+	        response.put("message", "Post not found");
+	        return response;
+	    }
+
+	    UserDtls user = userService.getUserByEmail(principal.getName());
+
+	    PetComment comment = new PetComment();
+	    comment.setPost(post);
+	    comment.setPet(post.getPet());
+	    comment.setUser(user);
+	    comment.setContent(content);
+
+	    petCommentRepository.save(comment);
+
+	    // Create notification
+	    notificationService.createCommentNotification(user, post.getPet(), post, content);
+
+	    response.put("success", true);
+	    response.put("message", "Comment added successfully");
+	    response.put("user", user.getName());
+	    response.put("content", content);
+	    
+	    return response;
 	}
 
 }

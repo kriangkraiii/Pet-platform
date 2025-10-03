@@ -1,80 +1,200 @@
-<!-- src/main/resources/templates/pet.html -->
 <!DOCTYPE html>
-<html lang="en" xmlns:th="http://www.thymeleaf.org" th:replace="~{base::layout(~{::section})}">
+<html lang="en" xmlns:th="http://www.thymeleaf.org"
+	th:replace="~{base::layout(~{::section})}">
 
 <head>
-	<meta charset="UTF-8">
-	<title>My Pets</title>
+<meta charset="UTF-8">
+<title>My Pets</title>
+<style>
+.dropdown-menu-pet-actions {
+	position: absolute;
+	right: 0;
+	top: 100%;
+	background: #fff;
+	border: 1px solid #dee2e6;
+	border-radius: 8px;
+	box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+	z-index: 1000;
+	display: none;
+	min-width: 120px;
+}
+
+.dropdown-menu-pet-actions .dropdown-item {
+	padding: 8px 12px;
+	display: block;
+	cursor: pointer;
+	text-decoration: none;
+	color: #333;
+	border: none;
+	background: none;
+	width: 100%;
+	text-align: left;
+}
+
+.dropdown-menu-pet-actions .dropdown-item:hover {
+	background: #f8f9fa;
+}
+
+.dropdown-menu-pet-actions .dropdown-item.text-danger:hover {
+	background: #f8d7da;
+}
+
+.three-dots-btn {
+	border: none;
+	background: none;
+	font-size: 1.2rem;
+	color: #6c757d;
+	cursor: pointer;
+	padding: 4px 8px;
+	border-radius: 4px;
+}
+
+.three-dots-btn:hover {
+	background: #f8f9fa;
+	color: #495057;
+}
+
+.pet-card {
+	min-height: 200px;
+}
+
+.pet-card .card-title {
+	font-size: 1.5rem;
+	font-weight: 600;
+	margin-bottom: 1rem;
+}
+
+.pet-card .card-text {
+	font-size: 1.1rem;
+	line-height: 1.6;
+}
+
+.pet-card .card-text strong {
+	font-size: 1.1rem;
+	color: #495057;
+}
+
+.pet-card .card-text span {
+	font-size: 1.05rem;
+	color: #6c757d;
+}
+
+.pet-card .card-body {
+	padding: 2rem;
+}
+
+.pet-image-container {
+	min-height: 200px;
+	max-height: 250px;
+}
+</style>
 </head>
 
 <body>
 	<section>
-		
 		<div class="container profile-card">
-			<!-- ✅ success / error message -->
-			<div th:if="${session.succAddPetMsg}" class="alert alert-success mt-2" th:text="${session.succAddPetMsg}">
+
+			<div th:if="${session.succAddPetMsg}"
+				class="alert alert-success mt-2" th:text="${session.succAddPetMsg}">
 			</div>
-			<div th:if="${session.errorAddPetMsg}" class="alert alert-danger mt-2" th:text="${session.errorAddPetMsg}">
+			<div th:if="${session.errorAddPetMsg}"
+				class="alert alert-danger mt-2" th:text="${session.errorAddPetMsg}">
 			</div>
 
-			<!-- ✅ button to add a new pet -->
 			<div class="justify-content-end mt-3 mb-3">
 				<a href="/user/pet/add" class="btn btn-primary">Add New Pet</a>
 
-			<!--                         -->
+				<!-- My Pets Section -->
+				<h2>My Pets</h2>
+				<div th:if="${noPetsMsg}" class="alert alert-info"
+					th:text="${noPetsMsg}"></div>
 
+				<div class="row" th:if="${pets}">
+					<div class="card-md-4 mb-4" th:each="pet : ${pets}">
+						<div class="card shadow-sm pet-card">
+							<div class="row g-0">
+								<!-- Pet image on the left -->
+								<div class="col-md-4 pet-image-container">
+									<img th:if="${pet.imagePet}"
+										th:src="@{'/img/pet_img/' + ${pet.imagePet}}"
+										class="img-fluid rounded-start" alt="Pet Image"
+										style="width: 100%; height: 100%; object-fit: cover;">
+								</div>
 
-			<!-- My Pets Section -->
-			<h2>My Pets</h2>
-			<div th:if="${noPetsMsg}" class="alert alert-info" th:text="${noPetsMsg}"></div>
+								<!-- Pet details on the right -->
+								<div class="col-md-8">
+									<div class="card-body position-relative">
+										<!-- Three dots dropdown - moved to top right -->
+										<div class="position-absolute top-0 end-0 mt-3 me-3">
+											<button type="button" class="three-dots-btn"
+												th:onclick="'togglePetMenu(this, ' + ${pet.id} + ')'">
+												<i class="fas fa-ellipsis-v"></i>
+											</button>
+											<div class="dropdown-menu-pet-actions"
+												th:id="'petMenu-' + ${pet.id}">
+												<a th:href="@{'/user/pet/edit/' + ${pet.id}}"
+													class="dropdown-item"> <i class="fas fa-edit me-2"></i>Edit
+												</a>
+												<form th:action="@{'/user/pet/delete/' + ${pet.id}}"
+													method="post" class="m-0">
+													<button type="submit" class="dropdown-item text-danger"
+														onclick="return confirm('Are you sure you want to delete this pet?')">
+														<i class="fas fa-trash me-2"></i>Delete
+													</button>
+												</form>
+											</div>
+										</div>
 
-			<div class="row" th:if="${pets}">
+										<h5 class="card-title" th:text="${pet.name}"></h5>
+										<p class="card-text">
+											<strong>Type:</strong> <span th:text="${pet.type}"></span><br>
+											<strong>Breed:</strong> <span th:text="${pet.breed}"></span><br>
+											<strong>Description:</strong> <span
+												th:text="${pet.description}"></span>
+										</p>
 
-				<div class="card-md-4 mb-3" th:each="pet : ${pets}">
-					<div class="card shadow-sm">
-						<div class="row g-0">
-							<!-- Pet image on the left -->
-							<div class="col-md-4">
-								<img th:if="${pet.imagePet}" th:src="@{'/img/pet_img/' + ${pet.imagePet}}" class="img-fluid rounded-start"
-									alt="Pet Image" style="height:100%; object-fit:cover;">
-							</div>
-
-							<!-- Pet details on the right -->
-							<div class="col-md-8">
-								<div class="card-body">
-									<h5 class="card-title" th:text="${pet.name}"></h5>
-									<p class="card-text">
-										<strong>Type:</strong> <span th:text="${pet.type}"></span><br>
-										<strong>Breed:</strong> <span th:text="${pet.breed}"></span><br>
-										<!--<strong>Age:</strong> <span th:text="${pet.age}"></span> years<br>-->
-										<strong>Description:</strong> <span th:text="${pet.description}"></span>
-									</p>
-									<!-- Buttons -->
-									<div class="d-flex justify-content-between">
-										<a th:href="@{'/user/pet/edit/' + ${pet.id}}"
-											style="text-decoration: underline;">Edit</a>
-
+										<!-- Buttons -->
+										<div class="d-flex justify-content-between align-items-center mt-4">
 											<!-- View Profile -->
 											<a th:href="@{'/community/pet/' + ${pet.id}}"
-											class="btn btn-sm btn-primary"> <i class="fas fa-eye"></i>
-											View Profile
+												class="btn btn-primary"> <i class="fas fa-eye me-2"></i>
+												View Profile
 											</a>
-											
-										<form th:action="@{'/user/pet/delete/' + ${pet.id}}" method="post">
-											<button type="submit" style="text-decoration: underline;"
-												onclick="return confirm('Are you sure you want to delete this pet?')">Delete</button>
-										</form>
+										</div>
 									</div>
 								</div>
+
 							</div>
 						</div>
 					</div>
 				</div>
 			</div>
-
-
 		</div>
+
+		<script>
+			function togglePetMenu(button, petId) {
+				const menu = document.getElementById('petMenu-' + petId);
+				
+				// Close all other menus
+				document.querySelectorAll('.dropdown-menu-pet-actions').forEach(el => {
+					if (el.id !== 'petMenu-' + petId) {
+						el.style.display = 'none';
+					}
+				});
+				
+				// Toggle current menu
+				menu.style.display = (menu.style.display === 'block') ? 'none' : 'block';
+			}
+
+			// Close menus when clicking outside
+			document.addEventListener('click', function(event) {
+				if (!event.target.closest('.three-dots-btn') && !event.target.closest('.dropdown-menu-pet-actions')) {
+					document.querySelectorAll('.dropdown-menu-pet-actions').forEach(el => {
+						el.style.display = 'none';
+					});
+				}
+			});
+		</script>
 	</section>
 </body>
-
 </html>
