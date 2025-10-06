@@ -55,7 +55,7 @@
 						
 							<td th:text="${pet.description}"></td>
 							<td>
-								<img th:if="${pet.imagePet}" th:src="@{'/img/pet_img/' + ${pet.imagePet}}" class="img-thumbnail"
+								<img th:if="${pet.imagePet}" th:src="${pet.imagePet}" class="img-thumbnail"
 									style="width:80px; height:80px; object-fit:cover;">
 							</td>
 							<td th:text="${pet.owner.id}"></td>

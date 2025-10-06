@@ -1,6 +1,7 @@
 package com.ecom.controller;
 
 import java.security.Principal;
+import java.util.ArrayList;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,8 +24,10 @@ import com.ecom.model.UserDtls;
 import com.ecom.repository.UserRepository;
 import com.ecom.service.CartService;
 import com.ecom.service.CategoryService;
+import com.ecom.service.FileService;
 import com.ecom.service.OrderService;
 import com.ecom.service.UserService;
+import com.ecom.util.BucketType;
 import com.ecom.util.CommonUtil;
 import com.ecom.util.OrderStatus;
 
@@ -50,6 +53,8 @@ public class UserController {
 	@Autowired
 	private PasswordEncoder passwordEncoder;
 
+	@Autowired
+	private FileService fileService;
 
 	@GetMapping("/")
 	public String home() {
@@ -59,42 +64,70 @@ public class UserController {
 
 	@ModelAttribute
 	public void getUserDetails(Principal p, Model m) {
-		if (p != null) {
-			String email = p.getName();
-			UserDtls userDtls = userService.getUserByEmail(email);
-			m.addAttribute("user", userDtls);
-			Integer countCart = cartService.getCountCart(userDtls.getId());
-			m.addAttribute("countCart", countCart);
-		}
-
-		List<Category> allActiveCategory = categoryService.getAllActiveCategory();
-		m.addAttribute("categorys", allActiveCategory);
+	    if (p != null) {
+	        try {
+	            String email = p.getName();
+	            UserDtls userDtls = userService.getUserByEmail(email);
+	            if (userDtls != null) {
+	                m.addAttribute("user", userDtls);
+	                Integer countCart = cartService.getCountCart(userDtls.getId());
+	                m.addAttribute("countCart", countCart != null ? countCart : 0);
+	            }
+	        } catch (Exception e) {
+	            e.printStackTrace();
+	            m.addAttribute("countCart", 0);
+	        }
+	    }
+	    
+	    try {
+	        List<Category> allActiveCategory = categoryService.getAllActiveCategory();
+	        m.addAttribute("categorys", allActiveCategory != null ? allActiveCategory : new ArrayList<>());
+	    } catch (Exception e) {
+	        e.printStackTrace();
+	        m.addAttribute("categorys", new ArrayList<>());
+	    }
 	}
+
+
 
 	@GetMapping("/addCart")
 	public String addToCart(@RequestParam Integer pid, @RequestParam Integer uid, HttpSession session) {
-		Cart saveCart = cartService.saveCart(pid, uid);
-
-		if (ObjectUtils.isEmpty(saveCart)) {
-			session.setAttribute("errorMsg", "Product add to cart failed");
-		} else {
-			session.setAttribute("succMsg", "Product added to cart");
-		}
-		return "redirect:/product/" + pid;
+	    try {
+	        Cart saveCart = cartService.saveCart(pid, uid);
+	        if (ObjectUtils.isEmpty(saveCart)) {
+	            session.setAttribute("errorMsg", "Product add to cart failed");
+	        } else {
+	            session.setAttribute("succMsg", "Product added to cart");
+	        }
+	    } catch (Exception e) {
+	        e.printStackTrace();
+	        session.setAttribute("errorMsg", "Error: " + e.getMessage());
+	    }
+	    return "redirect:/product/" + pid;
 	}
+
 
 	@GetMapping("/cart")
 	public String loadCartPage(Principal p, Model m) {
+	    UserDtls user = getLoggedInUserDetails(p);
 
-		UserDtls user = getLoggedInUserDetails(p);
-		List<Cart> carts = cartService.getCartsByUser(user.getId());
-		m.addAttribute("carts", carts);
-		if (carts.size() > 0) {
-			Double totalOrderPrice = carts.get(carts.size() - 1).getTotalOrderPrice();
-			m.addAttribute("totalOrderPrice", totalOrderPrice);
-		}
-		return "/user/cart";
+	    
+	    List<Cart> carts = cartService.getCartsByUser(user.getId());
+	    m.addAttribute("carts", carts);
+	    
+	    if (carts != null && !carts.isEmpty()) {
+	        // Calculate total from all cart items instead of relying on last item
+	        Double totalOrderPrice = carts.stream()
+	            .mapToDouble(cart -> cart.getProduct().getDiscountPrice() * cart.getQuantity())
+	            .sum();
+	        m.addAttribute("totalOrderPrice", totalOrderPrice);
+	    } else {
+	        m.addAttribute("totalOrderPrice", 0.0);
+	    }
+	    
+	    return "user/cart";
 	}
+
 
 	@GetMapping("/cartQuantityUpdate")
 	public String updateCartQuantity(@RequestParam String sy, @RequestParam Integer cid) {
@@ -114,17 +147,25 @@ public class UserController {
 
 	@GetMapping("/orders")
 	public String orderPage(Principal p, Model m) {
-		UserDtls user = getLoggedInUserDetails(p);
-		List<Cart> carts = cartService.getCartsByUser(user.getId());
-		m.addAttribute("carts", carts);
-		if (carts.size() > 0) {
-			Double orderPrice = carts.get(carts.size() - 1).getTotalOrderPrice();
-			Double totalOrderPrice = carts.get(carts.size() - 1).getTotalOrderPrice() + 0 + 0;
-			m.addAttribute("orderPrice", orderPrice);
-			m.addAttribute("totalOrderPrice", totalOrderPrice);
-		}
-		return "/user/order";
+	    UserDtls user = getLoggedInUserDetails(p);
+
+	    List<Cart> carts = cartService.getCartsByUser(user.getId());
+	    m.addAttribute("carts", carts);
+	    
+	    if (carts != null && !carts.isEmpty()) {
+	        // Calculate total properly
+	        Double totalOrderPrice = carts.stream()
+	            .mapToDouble(cart -> cart.getProduct().getDiscountPrice() * cart.getQuantity())
+	            .sum();
+	        m.addAttribute("orderPrice", totalOrderPrice);
+	        m.addAttribute("totalOrderPrice", totalOrderPrice);
+	    } else {
+	        m.addAttribute("orderPrice", 0.0);
+	        m.addAttribute("totalOrderPrice", 0.0);
+	    }
+	    return "user/order";
 	}
+
 
 	@PostMapping("/save-order")
 	public String saveOrder(@ModelAttribute OrderRequest request, Principal p) throws Exception {
@@ -137,7 +178,7 @@ public class UserController {
 
 	@GetMapping("/success")
 	public String loadSuccess() {
-		return "/user/success";
+		return "user/success";
 	}
 
 	@GetMapping("/user-orders")
@@ -145,8 +186,9 @@ public class UserController {
 		UserDtls loginUser = getLoggedInUserDetails(p);
 		List<ProductOrder> orders = orderService.getOrdersByUser(loginUser.getId());
 		m.addAttribute("orders", orders);
-		return "/user/my_orders";
+		return "user/my_orders";
 	}
+
 
 	@GetMapping("/update-status")
 	public String updateOrderStatus(@RequestParam Integer id, @RequestParam Integer st, HttpSession session) {
@@ -178,19 +220,33 @@ public class UserController {
 
 	@GetMapping("/profile")
 	public String profile() {
-		return "/user/profile";
+		return "user/profile";
 	}
+//
+//	@GetMapping("/profile")
+//	public String profile(Principal p, Model m) {
+//	    UserDtls user = getLoggedInUserDetails(p);
+//	    m.addAttribute("user", user);
+//	    return "/user/profile";
+//	}
+
 
 	@PostMapping("/update-profile")
 	public String updateProfile(@ModelAttribute UserDtls user, @RequestParam MultipartFile img, HttpSession session) {
-		UserDtls updateUserProfile = userService.updateUserProfile(user, img);
-		if (ObjectUtils.isEmpty(updateUserProfile)) {
-			session.setAttribute("errorMsg", "Profile not updated");
-		} else {
-			session.setAttribute("succMsg", "Profile Updated");
-		}
-		return "redirect:/user/profile";
+	    String imageUrl = commonUtil.getImageUrl(img, BucketType.PROFILE.getId());
+	    user.setProfileImage(imageUrl);
+	    
+	    UserDtls updateUserProfile = userService.updateUserProfile(user, img);
+	    
+	    if (ObjectUtils.isEmpty(updateUserProfile)) {
+	        session.setAttribute("errorMsg", "Profile not updated");
+	    } else {
+	        session.setAttribute("succMsg", "Profile Updated");
+	        fileService.uploadFileS3(img, 3);
+	    }
+	    return "redirect:/user/profile";
 	}
+
 
 	@PostMapping("/change-password")
 	public String changePassword(@RequestParam String newPassword, @RequestParam String currentPassword, Principal p,

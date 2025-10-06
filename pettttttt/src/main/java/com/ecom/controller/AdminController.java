@@ -19,6 +19,7 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.data.domain.Page;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -44,10 +45,12 @@ import com.ecom.model.ProductOrder;
 import com.ecom.model.UserDtls;
 import com.ecom.service.CartService;
 import com.ecom.service.CategoryService;
+import com.ecom.service.FileService;
 import com.ecom.service.OrderService;
 import com.ecom.service.PetService;
 import com.ecom.service.ProductService;
 import com.ecom.service.UserService;
+import com.ecom.util.BucketType;
 import com.ecom.util.CommonUtil;
 import com.ecom.util.OrderStatus;
 
@@ -85,6 +88,10 @@ public class AdminController {
 	@Autowired
 	private PetService petService;
 
+	@Autowired
+	private FileService fileService;
+	
+	
 	
 	// Consider adding more specific exception handling
 	@ExceptionHandler(IOException.class)
@@ -94,56 +101,8 @@ public class AdminController {
 	}
 
 
-//	@GetMapping("/deleteOrder/{id}")
-//	public String deleteOrder(@PathVariable Integer id, HttpServletRequest request, RedirectAttributes redirectAttributes, Principal p) {
-//	    try {
-//	        // Get the order before deleting for logging
-//	        ProductOrder order = orderService.getOrderById(id);
-//	        if (order != null) {
-//	            // Check if order can be deleted (only allow deletion of cancelled orders for safety)
-//	            if (!"Cancelled".equals(order.getStatus())) {
-//	                redirectAttributes.addFlashAttribute("errorMsg", "Only cancelled orders can be deleted");
-//	                return "redirect:/admin/orders";
-//	            }
-//	            
-//	            // Delete the order
-//	            Boolean isDeleted = orderService.deleteOrder(id);
-//	            
-//	            if (isDeleted) {
-//	                // Log the admin action
-//	                UserDtls admin = commonUtil.getLoggedInUserDetails(p);
-//	                String ipAddress = getClientIpAddress(request);
-//	                adminLogService.logAction(admin.getEmail(), admin.getName(), "DELETE_ORDER", 
-//	                    "Deleted order: " + order.getOrderId(), ipAddress);
-//	                
-//	                redirectAttributes.addFlashAttribute("succMsg", "Order deleted successfully");
-//	            } else {
-//	                redirectAttributes.addFlashAttribute("errorMsg", "Failed to delete order");
-//	            }
-//	        } else {
-//	            redirectAttributes.addFlashAttribute("errorMsg", "Order not found");
-//	        }
-//	    } catch (Exception e) {
-//	        redirectAttributes.addFlashAttribute("errorMsg", "Cannot delete order: " + e.getMessage());
-//	        e.printStackTrace();
-//	    }
-//	    
-//	    return "redirect:/admin/orders";
-//	}
 
 
-//	@GetMapping("/deleteOrder/{id}")
-//	public String deleteOrder(@PathVariable Integer id, HttpSession session) {
-//	    Boolean isDeleted = orderService.deleteOrder(id);
-//	    
-//	    if (isDeleted) {
-//	        session.setAttribute("succMsg", "Order deleted successfully");
-//	    } else {
-//	        session.setAttribute("errorMsg", "Failed to delete order");
-//	    }
-//	    
-//	    return "redirect:/admin/orders";
-//	}
 
 
 	// Add logging endpoint
@@ -172,7 +131,11 @@ public class AdminController {
 
 	    UserDtls admin = commonUtil.getLoggedInUserDetails(p);
 	    String ipAddress = getClientIpAddress(request);
-
+//        String imageName = file.isEmpty() ? "default.jpg" : file.getOriginalFilename();
+	    
+	    String imageUrl = commonUtil.getImageUrl(file, BucketType.CATEGORY.getId());
+	    category.setImageName(imageUrl);
+	    
 	    Boolean existCategory = categoryService.existCategory(category.getName());
 
 	    if (existCategory) {
@@ -182,22 +145,14 @@ public class AdminController {
 	                                "Failed to create category: " + category.getName() + " (name exists)", 
 	                                ipAddress);
 	    } else {
-	        String imageName = file.isEmpty() ? "default.jpg" : file.getOriginalFilename();
-	        category.setImageName(imageName);
+//	        String imageName = file.isEmpty() ? "default.jpg" : file.getOriginalFilename();
+       category.setImageName(imageUrl);
 
 	        Category saveCategory = categoryService.saveCategory(category);
 
 	        if (!ObjectUtils.isEmpty(saveCategory)) {
 	            if (!file.isEmpty()) {
-	                // Create external upload directory
-	                String uploadDir = System.getProperty("user.dir") + "/uploads/category_img/";
-	                File uploadFolder = new File(uploadDir);
-	                if (!uploadFolder.exists()) {
-	                    uploadFolder.mkdirs();
-	                }
 
-	                Path path = Paths.get(uploadDir + file.getOriginalFilename());
-	                Files.copy(file.getInputStream(), path, StandardCopyOption.REPLACE_EXISTING);
 	            }
 
 	            session.setAttribute("succMsg", "Category saved successfully");
@@ -205,59 +160,25 @@ public class AdminController {
 	                                    "CREATE_CATEGORY", 
 	                                    "Created new category: " + category.getName(), 
 	                                    ipAddress);
-	        } else {
+	            
+	            fileService.uploadFileS3(file, 1); // Upload to S3 bucket type 1 for category images
+	        } else{
+	        	
 	            session.setAttribute("errorMsg", "Something wrong on server");
 	            adminLogService.logAction(admin.getEmail(), admin.getName(), 
 	                                    "CREATE_CATEGORY_FAILED", 
 	                                    "Failed to create category: " + category.getName() + " (server error)", 
 	                                    ipAddress);
 	        }
+	        	
+	      
 	    }
 
 	    return "redirect:/admin/category";
 	}
 	
 
-//	@PostMapping("/delete-order")
-//	public String deleteOrder(@RequestParam Integer orderId, HttpSession session, Principal p) {
-//	    try {
-//	        // First check if the order exists and is cancelled
-//	        ProductOrder order = orderService.getOrderById(orderId);
-//	        
-//	        if (order == null) {
-//	            session.setAttribute("errorMsg", "Order not found");
-//	            return "redirect:/admin/orders";
-//	        }
-//	        
-//	        if (!"Cancelled".equals(order.getStatus())) {
-//	            session.setAttribute("errorMsg", "Only cancelled orders can be deleted");
-//	            return "redirect:/admin/orders";
-//	        }
-//	        
-//	        // Log admin action
-//	        UserDtls loggedInUser = commonUtil.getLoggedInUserDetails(p);
-//	        String ipAddress = getClientIpAddress(request);
-//	        adminLogService.logAction(loggedInUser.getEmail(), loggedInUser.getName(),
-//	                "DELETE_ORDER", "Deleted cancelled order: " + order.getOrderId(), ipAddress);
-//	        
-//	        // Delete the order
-//	       
-//	        Boolean isDeleted = orderService.deleteOrder(orderId);
-//	        
-//	        if (isDeleted) {
-//	            session.setAttribute("succMsg", "Order deleted successfully");
-//	        } else {
-//	            session.setAttribute("errorMsg", "Failed to delete order");
-//	        }
-//	        
-//	    } catch (Exception e) {
-//	       
-//	        session.setAttribute("errorMsg", "Cannot delete order: " + e.getMessage());
-//	        e.printStackTrace();
-//	    }
-//	    
-//	    return "redirect:/admin/orders";
-//	}
+
 
 	private String getClientIpAddress(HttpServletRequest request) {
 	    String xForwardedFor = request.getHeader("X-Forwarded-For");
@@ -281,10 +202,7 @@ public class AdminController {
 		m.addAttribute("categorys", allActiveCategory);
 	}
 
-//	@GetMapping("/")
-//	public String index() {
-//		return "admin/index";
-//	}
+
 
 	@GetMapping("/loadAddProduct")
 	public String loadAddProduct(Model m) {
@@ -296,7 +214,7 @@ public class AdminController {
 	@GetMapping("/category")
 	public String category(Model m, @RequestParam(name = "pageNo", defaultValue = "0") Integer pageNo,
 			@RequestParam(name = "pageSize", defaultValue = "10") Integer pageSize) {
-		// m.addAttribute("categorys", categoryService.getAllCategory());
+		
 		Page<Category> page = categoryService.getAllCategorPagination(pageNo, pageSize);
 		List<Category> categorys = page.getContent();
 		m.addAttribute("categorys", categorys);
@@ -307,43 +225,13 @@ public class AdminController {
 		m.addAttribute("totalPages", page.getTotalPages());
 		m.addAttribute("isFirst", page.isFirst());
 		m.addAttribute("isLast", page.isLast());
+		m.addAttribute("categorys", categoryService.getAllCategory());
 
 		return "admin/category";
 	}
 
-//	@PostMapping("/saveCategory")
-//	public String saveCategory(@ModelAttribute Category category, @RequestParam("file") MultipartFile file,
-//			HttpSession session) throws IOException {
-//
-//		String imageName = file != null ? file.getOriginalFilename() : "default.jpg";
-//		category.setImageName(imageName);
-//
-//		Boolean existCategory = categoryService.existCategory(category.getName());
-//
-//		if (existCategory) {
-//			session.setAttribute("errorMsg", "Category Name already exists");
-//		} else {
-//
-//			Category saveCategory = categoryService.saveCategory(category);
-//
-//			if (ObjectUtils.isEmpty(saveCategory)) {
-//				session.setAttribute("errorMsg", "Not saved ! internal server error");
-//			} else {
-//
-//				File saveFile = new ClassPathResource("static/img").getFile();
-//
-//				Path path = Paths.get(saveFile.getAbsolutePath() + File.separator + "category_img" + File.separator
-//						+ file.getOriginalFilename());
-//
-//				// System.out.println(path);
-//				Files.copy(file.getInputStream(), path, StandardCopyOption.REPLACE_EXISTING);
-//
-//				session.setAttribute("succMsg", "Saved successfully");
-//			}
-//		}
-//
-//		return "redirect:/admin/category";
-//	}
+
+
 
 	@GetMapping("/deleteCategory/{id}")
 	public String deleteCategory(@PathVariable int id, HttpSession session, Principal p) {
@@ -385,12 +273,15 @@ public class AdminController {
 
 	    Category oldCategory = categoryService.getCategoryById(category.getId());
 
-	    String imageName = file.isEmpty() ? oldCategory.getImageName() : file.getOriginalFilename();
+	 //   String imageName = file.isEmpty() ? oldCategory.getImageName() : file.getOriginalFilename();
+	    
 
+	    String imageUrl = commonUtil.getImageUrl(file, BucketType.CATEGORY.getId());
+	    
 	    if (!ObjectUtils.isEmpty(category)) {
 	        oldCategory.setName(category.getName());
 	        oldCategory.setIsActive(category.getIsActive());
-	        oldCategory.setImageName(imageName);
+	        oldCategory.setImageName(imageUrl);
 	    }
 
 	    Category updateCategory = categoryService.saveCategory(oldCategory);
@@ -406,6 +297,8 @@ public class AdminController {
 
 	            Path path = Paths.get(uploadDir + file.getOriginalFilename());
 	            Files.copy(file.getInputStream(), path, StandardCopyOption.REPLACE_EXISTING);
+	            
+	            
 	        }
 
 	        session.setAttribute("succMsg", "Category update success");
@@ -413,6 +306,7 @@ public class AdminController {
 	                                "UPDATE_CATEGORY", 
 	                                "Updated category: " + category.getName(), 
 	                                ipAddress);
+	        fileService.uploadFileS3(file, 1); // Upload to S3 bucket type 1 for category images
 	    } else {
 	        session.setAttribute("errorMsg", "something wrong on server");
 	        adminLogService.logAction(admin.getEmail(), admin.getName(), 
@@ -432,23 +326,17 @@ public class AdminController {
 	    UserDtls admin = commonUtil.getLoggedInUserDetails(p);
 	    String ipAddress = getClientIpAddress(request);
 
-	    String imageName = image.isEmpty() ? "default.jpg" : image.getOriginalFilename();
-	    product.setImage(imageName);
+	    //String imageName = image.isEmpty() ? "default.jpg" : image.getOriginalFilename();
+	    String imageUrl = commonUtil.getImageUrl(image, BucketType.PRODUCT.getId());
+	    product.setImage(imageUrl);
+//	    product.setImage(imageName);
 	    product.setDiscount(0);
 	    product.setDiscountPrice(product.getPrice());
 	    Product saveProduct = productService.saveProduct(product);
 
 	    if (!ObjectUtils.isEmpty(saveProduct)) {
 	        if (!image.isEmpty()) {
-	            // Create external upload directory
-	            String uploadDir = System.getProperty("user.dir") + "/uploads/product_img/";
-	            File uploadFolder = new File(uploadDir);
-	            if (!uploadFolder.exists()) {
-	                uploadFolder.mkdirs();
-	            }
-
-	            Path path = Paths.get(uploadDir + image.getOriginalFilename());
-	            Files.copy(image.getInputStream(), path, StandardCopyOption.REPLACE_EXISTING);
+	          
 	        }
 
 	        session.setAttribute("succMsg", "Product Saved Success");
@@ -456,6 +344,7 @@ public class AdminController {
 	                                "CREATE_PRODUCT", 
 	                                "Created new product: " + product.getTitle(), 
 	                                ipAddress);
+	        fileService.uploadFileS3(image	, 2); // Upload to S3 bucket type 2 for product images
 	    } else {
 	        session.setAttribute("errorMsg", "something wrong on server");
 	        adminLogService.logAction(admin.getEmail(), admin.getName(), 
@@ -493,8 +382,22 @@ public class AdminController {
 	    // Check if each product has orders and create a map for the template
 	    Map<Integer, Boolean> productOrdersMap = new HashMap<>();
 	    for (Product product : products) {
-	        List<ProductOrder> orders = orderService.getOrdersByProduct(product.getId());
-	        productOrdersMap.put(product.getId(), !orders.isEmpty());
+	        try {
+	            if (product.getId() != null) {
+	                List<ProductOrder> orders = orderService.getOrdersByProduct(product.getId());
+	                boolean hasOrders = orders != null && !orders.isEmpty();
+	                productOrdersMap.put(product.getId(), hasOrders);
+	                
+	                System.out.println("Product " + product.getId() + 
+	                                 " has " + (orders != null ? orders.size() : 0) + " orders. Has orders: " + hasOrders);
+	            } else {
+	                System.out.println("⚠️  Product with NULL ID found: " + product.getTitle());
+	                productOrdersMap.put(0, false); // fallback
+	            }
+	        } catch (Exception e) {
+	            System.out.println("❌ Error checking orders for product " + product.getId() + ": " + e.getMessage());
+	            productOrdersMap.put(product.getId(), false); // safe fallback
+	        }
 	    }
 
 	    // Add attributes for the view
@@ -551,6 +454,7 @@ public class AdminController {
 
 	    UserDtls admin = commonUtil.getLoggedInUserDetails(p);
 	    String ipAddress = getClientIpAddress(request);
+	    
 
 	    if (product.getDiscount() < 0 || product.getDiscount() > 100) {
 	        session.setAttribute("errorMsg", "invalid Discount");
@@ -587,7 +491,7 @@ public class AdminController {
 		}
 		m.addAttribute("userType",type);
 		m.addAttribute("users", users);
-		return "/admin/users";
+		return "admin/users";
 	}
 
 	@GetMapping("/updateSts")
@@ -697,7 +601,7 @@ public class AdminController {
 	        m.addAttribute("srch", true);
 	    } else {
 	        Page<ProductOrder> page = orderService.getAllOrdersPagination(pageNo, pageSize);
-	        m.addAttribute("orders", page.getContent()); // Change from page to page.getContent()
+	        m.addAttribute("orders", page.getContent()); 
 	        m.addAttribute("srch", false);
 
 	        m.addAttribute("pageNo", page.getNumber());
@@ -707,13 +611,13 @@ public class AdminController {
 	        m.addAttribute("isFirst", page.isFirst());
 	        m.addAttribute("isLast", page.isLast());
 	    }
-	    return "admin/orders"; // Remove the leading slash
+	    return "admin/orders"; 
 	}
 
 
 	@GetMapping("/add-admin")
 	public String loadAdminAdd() {
-		return "/admin/add_admin";
+		return "admin/add_admin";
 	}
 
 	@PostMapping("/save-admin")
@@ -722,28 +626,31 @@ public class AdminController {
 
 	    UserDtls admin = commonUtil.getLoggedInUserDetails(p);
 	    String ipAddress = getClientIpAddress(request);
-
-	    String imageName = file.isEmpty() ? "default.png" : file.getOriginalFilename();
-	    user.setProfileImage(imageName);
+	    String imageUrl = commonUtil.getImageUrl(file, BucketType.PROFILE.getId() );
+	    
+	    //String imageName = file.isEmpty() ? "default.png" : file.getOriginalFilename();
+	    user.setProfileImage(imageUrl);
+	    
 	    UserDtls saveUser = userService.saveAdmin(user);
 
 	    if (!ObjectUtils.isEmpty(saveUser)) {
 	        if (!file.isEmpty()) {
-	            // Create external upload directory
-	            String uploadDir = System.getProperty("user.dir") + "/uploads/profile_img/";
-	            File uploadFolder = new File(uploadDir);
-	            if (!uploadFolder.exists()) {
-	                uploadFolder.mkdirs();
-	            }
-
-	            Path path = Paths.get(uploadDir + file.getOriginalFilename());
-	            Files.copy(file.getInputStream(), path, StandardCopyOption.REPLACE_EXISTING);
+//	            // Create external upload directory
+//	            String uploadDir = System.getProperty("user.dir") + "/uploads/profile_img/";
+//	            File uploadFolder = new File(uploadDir);
+//	            if (!uploadFolder.exists()) {
+//	                uploadFolder.mkdirs();
+//	            }
+//
+//	            Path path = Paths.get(uploadDir + file.getOriginalFilename());
+//	            Files.copy(file.getInputStream(), path, StandardCopyOption.REPLACE_EXISTING);
 	        }
 	        session.setAttribute("succMsg", "Register successfully");
 	        adminLogService.logAction(admin.getEmail(), admin.getName(), 
 	                                "CREATE_ADMIN", 
 	                                "Created new admin: " + user.getEmail(), 
 	                                ipAddress);
+	        fileService.uploadFileS3(file, 3); 
 	    } else {
 	        session.setAttribute("errorMsg", "something wrong on server");
 	        adminLogService.logAction(admin.getEmail(), admin.getName(), 
@@ -758,16 +665,19 @@ public class AdminController {
 
 	@GetMapping("/profile")
 	public String profile() {
-		return "/admin/profile";
+		return "admin/profile";
 	}
 
 	@PostMapping("/update-profile")
 	public String updateProfile(@ModelAttribute UserDtls user, @RequestParam MultipartFile img, HttpSession session) {
 		UserDtls updateUserProfile = userService.updateUserProfile(user,img);
+		String imageUrl = commonUtil.getImageUrl(img, BucketType.PROFILE.getId());
+		user.setProfileImage(imageUrl);
 		if (ObjectUtils.isEmpty(updateUserProfile)) {
 			session.setAttribute("errorMsg", "Profile not updated");
 		} else {
 			session.setAttribute("succMsg", "Profile Updated");
+			fileService.uploadFileS3(img, 3);
 		}
 		return "redirect:/admin/profile";
 	}
@@ -868,7 +778,7 @@ public class AdminController {
 	        m.addAttribute("topProductsLabels", new ArrayList<>());
 	    }
 	    
-	    return "/admin/index";
+	    return "admin/index";
 	}
 
 	@GetMapping("/pet")
@@ -901,7 +811,7 @@ public class AdminController {
 	            return "redirect:/signin";
 	        }
 
-	        Pet pet = petService.getPetById(petId); // Use injected instance
+	        Pet pet = petService.getPetById(petId);
 	        if (pet == null) {
 	            session.setAttribute("adminErrorNotPMsg",
 	                    "Pet not found or you don't have permission to delete this pet");
@@ -918,7 +828,18 @@ public class AdminController {
 	            }
 	        }
 
-	        petService.deletePet(petId); // Use injected instance
+	        petService.deletePet(petId);
+	        
+	        // Add admin logging
+	        String ipAddress = getClientIpAddress(request);
+	        adminLogService.logAction(
+	            user.getEmail(),
+	            user.getName(),
+	            "DELETE_PET",
+	            "Deleted pet ID: " + petId + " (Name: " + pet.getName() + ")",
+	            ipAddress
+	        );
+	        
 	        session.setAttribute("adminSuccDPMsg", "Pet deleted successfully!");
 
 	    } catch (Exception e) {
@@ -928,6 +849,7 @@ public class AdminController {
 
 	    return "redirect:/admin/pet";
 	}
+
 
 
 	// Edit pet - show form
@@ -970,7 +892,7 @@ public class AdminController {
 	        return "redirect:/login";
 	    }
 
-	    Pet existingPet = petService.getPetById(petId); // Use injected instance
+	    Pet existingPet = petService.getPetById(petId);
 	    if (existingPet == null) {
 	        session.setAttribute("adminErrorNoPetMsg", "Not found or you don't have permission to edit this pet");
 	        return "redirect:/admin/pet";
@@ -978,41 +900,13 @@ public class AdminController {
 
 	    try {
 	        String imageName = existingPet.getImagePet();
-
-	        if (!imageFile.isEmpty()) {
-	            String originalFilename = imageFile.getOriginalFilename();
-	            String fileExtension = originalFilename.substring(originalFilename.lastIndexOf(".") + 1).toLowerCase();
-
-	            if (!List.of("jpg", "jpeg", "png", "gif", "webp").contains(fileExtension)) {
-	                session.setAttribute("errorImagePMsg",
-	                        "only image files are allowed (jpg, jpeg, png, gif, webp)");
-	                return "redirect:/admin/pet";
-	            }
-
-	            if (imageName != null && !imageName.equals("default.jpg")) {
-	                String oldImagePath = System.getProperty("user.dir") + "/uploads/pet_img/" + imageName;
-	                Files.deleteIfExists(Paths.get(oldImagePath));
-	            }
-
-	            String fileName = UUID.randomUUID().toString() + "_" + originalFilename.replaceAll("\\s+", "_");
-
-	            String uploadDir = System.getProperty("user.dir") + "/uploads/pet_img/";
-	            File uploadFolder = new File(uploadDir);
-	            if (!uploadFolder.exists()) {
-	                uploadFolder.mkdirs();
-	            }
-
-	            Path filePath = Paths.get(uploadDir, fileName);
-	            Files.copy(imageFile.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
-
-	            imageName = fileName;
-	        }
+	        String imageUrl = commonUtil.getImageUrl(imageFile, BucketType.PETPROFILE.getId());
 
 	        existingPet.setName(name);
 	        existingPet.setType(type);
 	        existingPet.setBreed(breed);
 	        existingPet.setDescription(description);
-	        existingPet.setImagePet(imageName);
+	        existingPet.setImagePet(imageUrl);
 
 	        if (ownerId > 0) {
 	            UserDtls owner = userService.getUserById(ownerId);
@@ -1021,9 +915,24 @@ public class AdminController {
 	            }
 	        }
 
-	        petService.updatePet(existingPet); // Use injected instance
+	        petService.updatePet(existingPet);
+	        
+	        // Add admin logging
+	        String email = principal.getName();
+	        UserDtls user = userService.getUserByEmail(email);
+	        String ipAddress = getClientIpAddress(request);
+	        adminLogService.logAction(
+	            user.getEmail(),
+	            user.getName(),
+	            "UPDATE_PET",
+	            "Updated pet ID: " + petId + " (Name: " + name + ")",
+	            ipAddress
+	        );
+	        
 	        session.setAttribute("succUPMsg", "updated successfully!");
-	    } catch (IOException e) {
+	        fileService.uploadFileS3(imageFile, 4);
+	        
+	    } catch (Exception e) {  // Changed from IOException to Exception
 	        e.printStackTrace();
 	        session.setAttribute("errorUPMsg", "update failed: " + e.getMessage());
 	    }
@@ -1031,10 +940,8 @@ public class AdminController {
 	    return "redirect:/admin/pet";
 	}
 
-//	
-//	@GetMapping("/pet/test")
-//	public String testPet() {
-//		return "test"; // ชื่อไฟล์ HTML สำหรับฟอร์มแก้ไข
-//	}
+
+
+
 
 }

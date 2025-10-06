@@ -15,7 +15,9 @@ import com.ecom.service.UserService;
 import com.ecom.service.AdminLogService;
 import com.ecom.service.CategoryService;
 import com.ecom.service.CommunityPostService;
+import com.ecom.service.FileService;
 import com.ecom.service.CartService;
+import com.ecom.util.BucketType;
 import com.ecom.util.CommonUtil;
 
 import jakarta.servlet.http.HttpServletRequest;
@@ -41,6 +43,7 @@ import java.nio.file.StandardCopyOption;
 import java.security.Principal;
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Controller
 @RequestMapping("/admin")
@@ -85,7 +88,9 @@ public class AdminCommunityController {
     @Autowired 
     private CommunityPostService communityPostService;
     
-    // ✅ เพิ่ม @ModelAttribute เพื่อให้ user data ถูกส่งไปทุกหน้า
+    @Autowired
+    private FileService fileService;
+
     @ModelAttribute
     public void getUserDetails(Principal p, Model m) {
         if (p != null) {
@@ -93,14 +98,12 @@ public class AdminCommunityController {
             UserDtls userDtls = userService.getUserByEmail(email);
             m.addAttribute("user", userDtls);
             
-            // เพิ่ม cart count สำหรับ admin (แม้ว่าจะไม่ใช้ก็ตาม)
             if (userDtls != null) {
                 Integer countCart = cartService.getCountCart(userDtls.getId());
                 m.addAttribute("countCart", countCart != null ? countCart : 0);
             }
         }
 
-        // เพิ่ม categories สำหรับ navbar (ถ้าจำเป็น)
         List<Category> allActiveCategory = categoryService.getAllActiveCategory();
         m.addAttribute("categorys", allActiveCategory);
     }
@@ -118,7 +121,6 @@ public class AdminCommunityController {
                                     @RequestParam(name = "pageNo", defaultValue = "0") Integer pageNo,
                                     @RequestParam(name = "pageSize", defaultValue = "10") Integer pageSize) {
         
-        // Pagination setup
         Pageable pageable = PageRequest.of(pageNo, pageSize, Sort.by(Sort.Direction.DESC, "createdAt"));
         Page<CommunityPost> page = communityPostRepository.findAll(pageable);
         
@@ -127,17 +129,11 @@ public class AdminCommunityController {
             currentAdmin = userService.getUserByEmail(principal.getName());
         }
 
-        // Set like count and liked status for each post
-
         for (CommunityPost post : page.getContent()) {
-            // นับจำนวน Like ของโพสต์
             long likeCount = postLikeRepository.countByPost(post);
-            
-            // ตรวจสอบว่าแอดมินคนปัจจุบันเคยกด Like โพสต์นี้หรือไม่
             boolean likedByCurrentAdmin = (currentAdmin != null) &&
                                            postLikeRepository.existsByUserAndPost(currentAdmin, post);
             
-            // เซตค่าลงในโพสต์
             post.setLikeCount(likeCount);
             post.setLikedByCurrentUser(likedByCurrentAdmin);
         }
@@ -174,7 +170,6 @@ public class AdminCommunityController {
                 return "redirect:/admin/community";
             }
 
-            // Log การลบโพสต์
             UserDtls admin = userService.getUserByEmail(principal.getName());
             String ipAddress = getClientIpAddress(request);
             adminLogService.logAction(
@@ -194,9 +189,6 @@ public class AdminCommunityController {
         return "redirect:/admin/community";
     }
 
-
-
-
     @GetMapping("/community/post/{postId}/edit")
     public String showEditPostForm(@PathVariable Long postId, Model model, Principal principal,
                                   RedirectAttributes redirectAttributes) {
@@ -211,84 +203,16 @@ public class AdminCommunityController {
             return "redirect:/admin/community";
         }
 
-        // Get all pets for selection
-        List<Pet> allPets = petService.getAllPets();
+        // Filter pets to only show pets owned by the post creator
+        List<Pet> userPets = petService.getAllPets().stream()
+                .filter(pet -> pet.getOwner().getId().equals(post.getUser().getId()))
+                .collect(Collectors.toList());
         
         model.addAttribute("post", post);
-        model.addAttribute("allPets", allPets);
+        model.addAttribute("allPets", userPets); // Only pets owned by post creator
         return "admin/edit_community_post";
     }
 
-    /*
-    @PostMapping("/community/post/{postId}/update")
-    public String updatePost(@PathVariable Long postId,
-                           @RequestParam int petId,
-                           @RequestParam String description,
-                           @RequestParam(value = "postImage", required = false) MultipartFile postImage,
-                           Principal principal,
-                           RedirectAttributes redirectAttributes) {
-        try {
-            if (principal == null) {
-                redirectAttributes.addFlashAttribute("errorMsg", "Access denied.");
-                return "redirect:/admin/community";
-            }
-
-            UserDtls admin = userService.getUserByEmail(principal.getName());
-            CommunityPost post = communityPostRepository.findById(postId).orElse(null);
-
-            if (post == null) {
-                redirectAttributes.addFlashAttribute("errorMsg", "Post not found.");
-                return "redirect:/admin/community";
-            }
-
-            Pet pet = petService.getPetById(petId);
-            if (pet == null) {
-                redirectAttributes.addFlashAttribute("errorMsg", "Invalid pet selection.");
-                return "redirect:/admin/community";
-            }
-
-            String oldPostImage = post.getPostImage();
-            post.setPet(pet);
-            post.setDescription(description);
-
-            // Handle image upload
-            if (postImage != null && !postImage.isEmpty()) {
-                // Delete old image if not default
-                if (oldPostImage != null && !oldPostImage.equals("/upload/posts/default.jpg")) {
-                    try {
-                        String oldImagePath = "src/main/resources/static" + oldPostImage;
-                        Files.deleteIfExists(Paths.get(oldImagePath));
-                    } catch (Exception e) {
-                        System.err.println("Failed to delete old image: " + e.getMessage());
-                    }
-                }
-
-                // Save new image
-                String fileName = UUID.randomUUID() + "_" + postImage.getOriginalFilename();
-                String uploadDir = "src/main/resources/static/upload/posts/";
-                Files.createDirectories(Paths.get(uploadDir));
-                Path path = Paths.get(uploadDir + fileName);
-                Files.write(path, postImage.getBytes());
-
-                post.setPostImage("/upload/posts/" + fileName);
-            }
-
-            communityPostRepository.save(post);
-
-            // Log admin action
-            String ipAddress = getClientIpAddress(request);
-            adminLogService.logAction(admin.getEmail(), admin.getName(), "UPDATE_COMMUNITY_POST",
-                    "Updated community post ID: " + postId + " of user: " + post.getUser().getEmail(), ipAddress);
-
-            redirectAttributes.addFlashAttribute("succMsg", "Post updated successfully!");
-
-        } catch (IOException e) {
-            e.printStackTrace();
-            redirectAttributes.addFlashAttribute("errorMsg", "Failed to update post: " + e.getMessage());
-        }
-
-        return "redirect:/admin/community";
-    }*/
     
     @PostMapping("/community/post/{postId}/update")
     public String updatePost(
@@ -308,7 +232,8 @@ public class AdminCommunityController {
 
             UserDtls admin = userService.getUserByEmail(principal.getName());
             CommunityPost post = communityPostRepository.findById(postId).orElse(null);
-
+            String imageUrl = commonUtil.getImageUrl(postImage, BucketType.PETPOST.getId());
+            
             if (post == null) {
                 redirectAttributes.addFlashAttribute("errorMsg", "Post not found.");
                 return "redirect:/admin/community";
@@ -324,12 +249,9 @@ public class AdminCommunityController {
             post.setPet(pet);
             post.setDescription(description);
 
-            // อัปโหลดรูปภาพลง classpath: static/upload/posts และลบรูปเก่าถ้ามี
             if (postImage != null && !postImage.isEmpty()) {
-                // โฟลเดอร์ static บน classpath
                 File staticDir = new ClassPathResource("static").getFile();
 
-                // ลบรูปเก่า (ถ้าไม่ใช่ default)
                 if (oldPostImage != null && !oldPostImage.equals("/upload/posts/default.jpg")) {
                     String oldRelPath = oldPostImage.startsWith("/") ? oldPostImage.substring(1) : oldPostImage;
                     File oldFile = new File(staticDir, oldRelPath);
@@ -340,24 +262,20 @@ public class AdminCommunityController {
                     }
                 }
 
-                // สร้างโฟลเดอร์ upload/posts ถ้ายังไม่มี
                 File uploadDir = new File(staticDir, "upload" + File.separator + "posts");
                 if (!uploadDir.exists()) {
                     uploadDir.mkdirs();
                 }
 
-                // บันทึกไฟล์ใหม่
                 String fileName = UUID.randomUUID() + "_" + postImage.getOriginalFilename();
                 Path dest = Paths.get(uploadDir.getAbsolutePath(), fileName);
                 Files.copy(postImage.getInputStream(), dest, StandardCopyOption.REPLACE_EXISTING);
 
-                post.setPostImage("/upload/posts/" + fileName);
+                post.setPostImage(imageUrl);
             }
 
-            // บันทึกโพสต์ที่อัปเดต
             communityPostRepository.save(post);
 
-            // บันทึก log การกระทำของแอดมิน
             String ipAddress = getClientIpAddress(request);
             adminLogService.logAction(
                     admin.getEmail(),
@@ -368,7 +286,7 @@ public class AdminCommunityController {
             );
 
             redirectAttributes.addFlashAttribute("succMsg", "Post updated successfully!");
-
+            fileService.uploadFileS3(postImage, BucketType.PETPOST.getId());
         } catch (Exception e) {
             e.printStackTrace();
             redirectAttributes.addFlashAttribute("errorMsg", "Failed to update post: " + e.getMessage());
@@ -376,8 +294,6 @@ public class AdminCommunityController {
 
         return "redirect:/admin/community";
     }
-
-    
 
     @GetMapping("/community/post/{postId}/comments")
     public String viewPostComments(@PathVariable Long postId, Model model, Principal principal,
@@ -422,7 +338,6 @@ public class AdminCommunityController {
 
             Long postId = comment.getPost() != null ? comment.getPost().getId() : null;
 
-            // Log admin action
             String ipAddress = getClientIpAddress(request);
             adminLogService.logAction(admin.getEmail(), admin.getName(), "DELETE_COMMENT",
                     "Deleted comment ID: " + commentId + " by user: " + comment.getUser().getEmail(), ipAddress);

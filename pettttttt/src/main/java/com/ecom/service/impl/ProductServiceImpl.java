@@ -22,6 +22,8 @@ import com.ecom.model.Product;
 import com.ecom.repository.ProductRepository;
 import com.ecom.service.CartService;
 import com.ecom.service.ProductService;
+import com.ecom.util.BucketType;
+import com.ecom.util.CommonUtil;
 
 import jakarta.transaction.Transactional;
 
@@ -34,6 +36,12 @@ public class ProductServiceImpl implements ProductService {
 	@Autowired
 	private CartService cartService;
 
+	@Autowired
+	private CommonUtil commonUtil;
+	
+	@Autowired
+	FileServiceImpl fileServiceImpl;
+	
 	@Override
 	public Product saveProduct(Product product) {
 		return productRepository.save(product);
@@ -98,14 +106,15 @@ public class ProductServiceImpl implements ProductService {
 
 	    Product dbProduct = getProductById(product.getId());
 
-	    String imageName = image.isEmpty() ? dbProduct.getImage() : image.getOriginalFilename();
+	    //String imageName = image.isEmpty() ? dbProduct.getImage() : image.getOriginalFilename();
+	    String imageUrl = commonUtil.getImageUrl(image,BucketType.PRODUCT.getId()); 
 
 	    dbProduct.setTitle(product.getTitle());
 	    dbProduct.setDescription(product.getDescription());
 	    dbProduct.setCategory(product.getCategory());
 	    dbProduct.setPrice(product.getPrice());
 	    dbProduct.setStock(product.getStock());
-	    dbProduct.setImage(imageName);
+	    dbProduct.setImage(imageUrl);
 	    dbProduct.setIsActive(product.getIsActive());
 	    dbProduct.setDiscount(product.getDiscount());
 
@@ -122,8 +131,10 @@ public class ProductServiceImpl implements ProductService {
 	                // Create external upload directory
 	                String uploadDir = System.getProperty("user.dir") + "/uploads/product_img/";
 	                File uploadFolder = new File(uploadDir);
+	                fileServiceImpl.uploadFileS3(image, BucketType.PRODUCT.getId());
 	                if (!uploadFolder.exists()) {
 	                    uploadFolder.mkdirs();
+	                    
 	                }
 
 	                Path path = Paths.get(uploadDir + image.getOriginalFilename());

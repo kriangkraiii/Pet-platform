@@ -46,7 +46,7 @@
 					<div class="mb-2"> <label for="imagePet" class="form-label">Upload New Image</label> <input
 							type="file" class="form-control" id="imagePet" name="imagePet" accept="image/*"
 							onchange="previewImage(event)"> <!-- แสดงภาพเดิม --> <img id="preview"
-							th:src="@{'/img/pet_img/' + ${pet.imagePet}}" alt="Current Pet Image" class="mt-2"
+							th:src="${pet.imagePet}" alt="Current Pet Image" class="mt-2"
 							style="width: 150px; height: 150px; object-fit: cover;"> </div> <button type="submit"
 						class="btn btn-primary">Update Pet</button> <a th:href="@{/admin/pet}"
 						class="btn btn-secondary ms-2">Cancel</a> <!-- ✅ success / error message -->

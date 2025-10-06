@@ -1,46 +1,53 @@
 package com.ecom.controller;
 
-import com.ecom.model.Pet;
-import com.ecom.model.PetComment;
-import com.ecom.model.PetLike;
-import com.ecom.model.PostLike;
-import com.ecom.model.UserDtls;
-import com.ecom.model.CommunityPost;
-import com.ecom.repository.PetCommentRepository;
-import com.ecom.repository.PetLikeRepository;
-import com.ecom.repository.PostLikeRepository;
-import com.ecom.repository.CommunityPostRepository;
-import com.ecom.repository.NotificationRepository;
-import com.ecom.service.CommunityPostService;
-import com.ecom.service.NotificationService;
-import com.ecom.service.PetService;
-import com.ecom.service.UserService;
-
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
-import java.nio.file.Files;
-import java.io.File;
-import java.io.IOException;
-import java.nio.file.StandardOpenOption;
-
-import jakarta.servlet.http.HttpSession;
-
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.core.io.ClassPathResource;
-import org.springframework.stereotype.Controller;
-import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
-
 import java.security.Principal;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.UUID;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.multipart.MultipartFile;
+
+import com.ecom.model.Category;
+import com.ecom.model.CommunityPost;
+import com.ecom.model.Pet;
+import com.ecom.model.PetComment;
+import com.ecom.model.PostLike;
+import com.ecom.model.UserDtls;
+import com.ecom.repository.CommunityPostRepository;
+import com.ecom.repository.NotificationRepository;
+import com.ecom.repository.PetCommentRepository;
+import com.ecom.repository.PetLikeRepository;
+import com.ecom.repository.PostLikeRepository;
+import com.ecom.service.CartService;
+import com.ecom.service.CategoryService;
+import com.ecom.service.CommunityPostService;
+import com.ecom.service.FileService;
+import com.ecom.service.NotificationService;
+import com.ecom.service.PetService;
+import com.ecom.service.UserService;
+import com.ecom.util.BucketType;
+import com.ecom.util.CommonUtil;
+
+import jakarta.servlet.http.HttpSession;
 
 @Controller
 public class CommunityController {
@@ -71,15 +78,56 @@ public class CommunityController {
 
 	@Autowired
 	private CommunityPostService communityPostService;
-
+	
+	@Autowired
+	private FileService fileService;
+	
+	@Autowired
+	private CommonUtil commonUtil;
+	
+	@Autowired
+	private CategoryService categoryService;
+	
+	@Autowired
+	private CartService cartService;
+	
+	@ModelAttribute
+	public void getUserDetails(Principal p, Model m) {
+	    if (p != null) {
+	        try {
+	            String email = p.getName();
+	            UserDtls userDtls = userService.getUserByEmail(email);
+	            if (userDtls != null) {
+	                m.addAttribute("user", userDtls);
+	                Integer countCart = cartService.getCountCart(userDtls.getId());
+	                m.addAttribute("countCart", countCart != null ? countCart : 0);
+	            }
+	        } catch (Exception e) {
+	            e.printStackTrace();
+	            m.addAttribute("countCart", 0);
+	        }
+	    }
+	    
+	    try {
+	        List<Category> allActiveCategory = categoryService.getAllActiveCategory();
+	        m.addAttribute("categorys", allActiveCategory != null ? allActiveCategory : new ArrayList<>());
+	    } catch (Exception e) {
+	        e.printStackTrace();
+	        m.addAttribute("categorys", new ArrayList<>());
+	    }
+	}
+	
 	@ModelAttribute
 	public void addNavbarData(Model model, Principal principal) {
 		if (principal != null) {
 			UserDtls currentUser = userService.getUserByEmail(principal.getName());
 			model.addAttribute("user", currentUser);
 		}
-		model.addAttribute("countCart", 0);
+		/* model.addAttribute("countCart", 0); */
 	}
+	
+	
+	
 	@GetMapping("/community")
 	public String communityPage(Model model, Principal principal, HttpSession session) {
 	    // Add success/error message handling at the beginning
@@ -188,7 +236,8 @@ public class CommunityController {
 	    }
 
 	    try {
-	        String postImagePath = null;
+	        //String postImagePath = null;
+	        String imageUrl = commonUtil.getImageUrl(postImage, BucketType.PETPOST.getId());
 
 	        if (postImage != null && !postImage.isEmpty()) {
 	            String fileName = System.currentTimeMillis() + "_" + postImage.getOriginalFilename();
@@ -203,18 +252,19 @@ public class CommunityController {
 	            Files.copy(postImage.getInputStream(), path, StandardCopyOption.REPLACE_EXISTING);
 
 	            // เก็บเฉพาะชื่อไฟล์ ไม่ใส่ path
-	            postImagePath = fileName;
+	            //postImagePath = fileName;
 	        }
 
 	        CommunityPost newPost = new CommunityPost();
 	        newPost.setUser(user);
 	        newPost.setPet(pet);
 	        newPost.setDescription(description);
-	        newPost.setPostImage(postImagePath);
+	        newPost.setPostImage(imageUrl);
 
 	        communityPostRepository.save(newPost);
 
 	        session.setAttribute("succMsg", "Post shared successfully!");
+	        fileService.uploadFileS3(postImage	, 5);
 
 	    } catch (IOException e) {
 	        e.printStackTrace();
@@ -339,13 +389,25 @@ public class CommunityController {
 
 		// ดึงโพสต์ของสัตว์ตัวนี้ เรียงจากใหม่ไปเก่า
 		List<CommunityPost> petPosts = communityPostRepository.findByPetOrderByCreatedAtDesc(pet);
+		List<CommunityPost> posts = communityPostRepository.findAllByOrderByCreatedAtDesc();
+		
+		// นับจำนวน like และเช็กว่า user ปัจจุบันกด like โพสต์ไหนบ้าง
+	    for (CommunityPost post : posts) {
+	        long likeCount = postLikeRepository.countByPost(post);
+	        boolean likedByCurrentUser = (currentUser != null
+	                && postLikeRepository.existsByUserAndPost(currentUser, post));
+
+	        post.setLikeCount(likeCount);
+	        post.setLikedByCurrentUser(likedByCurrentUser);
+	    }
 
 		// ส่งข้อมูลไปยัง View
 		model.addAttribute("pet", pet);
 		model.addAttribute("owner", pet.getOwner());
 		model.addAttribute("petPosts", petPosts);
 		model.addAttribute("postsCount", petPosts != null ? petPosts.size() : 0);
-
+		model.addAttribute("currentUser", currentUser);
+		
 		return "community_pet";
 	}
 	@PostMapping("/community/comment/{commentId}/edit")
@@ -588,6 +650,7 @@ public class CommunityController {
 
 	    CommunityPost post = communityPostRepository.findById(postId)
 	            .orElseThrow(() -> new RuntimeException("Post not found"));
+	    //String imageUrl = commonUtil.getImageUrl(postImage, BucketType.PETPOST.getId());
 
 	    // ตรวจสอบว่าเจ้าของโพสต์ตรงกับผู้ใช้งานปัจจุบันหรือไม่
 	    if (!post.getUser().getId().equals(currentUser.getId())) {
@@ -608,23 +671,26 @@ public class CommunityController {
 
 	    // อัปเดตรูปภาพโดยเขียนลง classpath: static/upload/posts
 	    if (postImage != null && !postImage.isEmpty()) {
-	        String fileName = java.util.UUID.randomUUID() + "_" + postImage.getOriginalFilename();
+	        //String fileName = java.util.UUID.randomUUID() + "_" + postImage.getOriginalFilename();
 	        
-	        String uploadDir = System.getProperty("user.dir") + "/uploads/posts/";
-	        File uploadFolder = new File(uploadDir);
-	        if (!uploadFolder.exists()) {
-	            uploadFolder.mkdirs();
-	        }
+	        //String uploadDir = System.getProperty("user.dir") + "/uploads/posts/";
+	        String imageUrl = commonUtil.getImageUrl(postImage, BucketType.PETPOST.getId());
+	        //File uploadFolder = new File(uploadDir);
+//	        if (!uploadFolder.exists()) {
+//	            uploadFolder.mkdirs();
+//	        }
 
-	        Path path = Paths.get(uploadDir, fileName);
-	        Files.copy(postImage.getInputStream(), path, StandardCopyOption.REPLACE_EXISTING);
+	        //Path path = Paths.get(uploadDir, fileName);
+	        //Files.copy(postImage.getInputStream(), path, StandardCopyOption.REPLACE_EXISTING);
 
 	        // เก็บเฉพาะชื่อไฟล์
-	        post.setPostImage(fileName);
+	        post.setPostImage(imageUrl);
+	        //fileService.uploadFileS3(imageUrl	, 5);
 	    }
 
 	    communityPostRepository.save(post);
 	    session.setAttribute("succMsg", "Post updated successfully!");
+	    fileService.uploadFileS3(postImage	, 5);
 
 	    return "redirect:/community";
 	}

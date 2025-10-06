@@ -108,8 +108,7 @@ public class HomeController {
 		m.addAttribute("paramValue", category);
 		m.addAttribute("categories", categories);
 
-//		List<Product> products = productService.getAllActiveProducts(category);
-//		m.addAttribute("products", products);
+
 		Page<Product> page = null;
 		if (StringUtils.isEmpty(ch)) {
 			page = productService.getAllActiveProductPagination(pageNo, pageSize, category);
@@ -142,7 +141,8 @@ public class HomeController {
 	public String saveUser(@ModelAttribute UserDtls user, HttpSession session) {
 
 	    Boolean existsEmail = userService.existsEmail(user.getEmail());
-
+	    
+	    
 	    if (existsEmail) {
 	        session.setAttribute("errorMsg", "Email already exist");
 	    } else {

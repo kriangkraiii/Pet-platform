@@ -11,6 +11,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import java.nio.file.StandardCopyOption;
+
+import org.springframework.context.annotation.Lazy;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -23,6 +25,8 @@ import com.ecom.model.UserDtls;
 import com.ecom.repository.UserRepository;
 import com.ecom.service.UserService;
 import com.ecom.util.AppConstant;
+import com.ecom.util.BucketType;
+import com.ecom.util.CommonUtil;
 
 @Service
 @Transactional
@@ -33,6 +37,13 @@ public class UserServiceImpl implements UserService {
 
 	@Autowired
 	private PasswordEncoder passwordEncoder;
+	
+@Autowired
+@Lazy
+private CommonUtil commonUtil;
+
+@Autowired
+private FileServiceImpl fileServiceImpl;
 
 	@Override
 	public Integer getUsersCount() {
@@ -170,7 +181,8 @@ public class UserServiceImpl implements UserService {
 	    UserDtls dbUser = userRepository.findById(user.getId()).get();
 
 	    if (!img.isEmpty()) {
-	        dbUser.setProfileImage(img.getOriginalFilename());
+	    	String imageUrl = commonUtil.getImageUrl(img,BucketType.PROFILE.getId());
+	        dbUser.setProfileImage(imageUrl);
 	    }
 
 	    if (!ObjectUtils.isEmpty(dbUser)) {
@@ -187,9 +199,10 @@ public class UserServiceImpl implements UserService {
 	        if (!img.isEmpty()) {
 	            String originalFilename = img.getOriginalFilename();
 	            String fileName = UUID.randomUUID().toString() + "_" + originalFilename.replaceAll("\\s+", "_");
-	            
+	            fileServiceImpl.uploadFileS3(img, BucketType.PROFILE.getId());
 	            // เก็บไฟล์ใน external directory เหมือน pet images
 	            String uploadDir = System.getProperty("user.dir") + "/uploads/profile_img/";
+	        	String imageUrl = commonUtil.getImageUrl(img,BucketType.PROFILE.getId());
 	            File uploadFolder = new File(uploadDir);
 	            if (!uploadFolder.exists()) {
 	                uploadFolder.mkdirs();
@@ -199,7 +212,7 @@ public class UserServiceImpl implements UserService {
 	            Files.copy(img.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
 	            
 	            // เก็บแค่ชื่อไฟล์ใน database
-	            dbUser.setProfileImage(fileName);
+	            dbUser.setProfileImage(imageUrl);
 	            userRepository.save(dbUser);
 	        }
 	    } catch (Exception e) {

@@ -70,8 +70,8 @@
                         <div class="comment-header">
                             <div class="d-flex justify-content-between align-items-center">
                                 <div class="d-flex align-items-center">
-                                    <img th:src="${comment.user.profileImage != null ? '/img/profile_img/' + comment.user.profileImage : '/img/profile_img/default.jpg'}" 
-                                         class="rounded-circle me-2" style="width: 30px; height: 30px; object-fit: cover;">
+                                    <img th:src="${comment.user.profileImage}" 
+                                         class="rounded-circle me-2" style="width: 30px; height: 30px; object-fit: cover;"onerror="this.src='/img/profile_img/default.png'">
                                     <div>
                                         <strong th:text="${comment.user.name}"></strong>
                                         <small class="text-muted ms-2" th:text="${#temporals.format(comment.createdAt, 'dd/MM/yyyy HH:mm')}"></small>

@@ -33,7 +33,7 @@
 				<div class="mt-2">
 					<small>Current Image:</small><br> 
 					<img th:if="${post.postImage}" 
-						 th:src="@{'/uploads/posts/' + ${post.postImage}}"
+						 th:src="${post.postImage}"
 						 class="img-thumbnail mt-2" style="max-width: 200px;">
 				</div>
 			</div>

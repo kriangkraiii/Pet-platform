@@ -3,6 +3,8 @@ package com.ecom.model;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
+import java.util.List;
+
 @Entity
 @Table(name = "community_posts")
 public class CommunityPost {
@@ -34,6 +36,13 @@ public class CommunityPost {
 	@Transient
 	private long likeCount;
 
+	@OneToMany(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true)
+	private List<PetComment> comments;
+	@OneToMany(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true)
+	private List<PostLike> likes;
+
+	@OneToMany(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true)
+	private List<Notification> notifications;
 	@PrePersist
 	public void prePersist() {
 		if (createdAt == null) {

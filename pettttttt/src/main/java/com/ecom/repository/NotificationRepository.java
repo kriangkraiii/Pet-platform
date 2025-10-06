@@ -1,5 +1,6 @@
 package com.ecom.repository;
 
+import com.ecom.model.CommunityPost;
 import com.ecom.model.Notification;
 import com.ecom.model.UserDtls;
 import org.springframework.data.jpa.repository.*;
@@ -33,4 +34,9 @@ public interface NotificationRepository extends JpaRepository<Notification, Long
     @Modifying
     @Query("DELETE FROM Notification n WHERE n.pet.id = :petId")
     void deleteByPetId(@Param("petId") Integer petId);
+    
+    @Modifying
+    @Query("DELETE FROM Notification n WHERE n.post = :post")
+    void deleteByPost(@Param("post") CommunityPost post);
+
 }

@@ -1,19 +1,29 @@
 package com.ecom.controller;
 
-import com.ecom.model.Notification;
-import com.ecom.model.UserDtls;
-import com.ecom.service.NotificationService;
-import com.ecom.service.UserService;
+import java.security.Principal;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.ResponseBody;
 
-import java.security.Principal;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import com.ecom.model.Category;
+import com.ecom.model.Notification;
+import com.ecom.model.UserDtls;
+import com.ecom.service.CartService;
+import com.ecom.service.CategoryService;
+import com.ecom.service.NotificationService;
+import com.ecom.service.UserService;
 
 @Controller
 @RequestMapping("/notifications")
@@ -24,6 +34,38 @@ public class NotificationController {
 
     @Autowired
     private UserService userService;
+    
+    @Autowired
+    private CategoryService categoryService;
+    
+    @Autowired
+    private CartService cartService;
+    
+    @ModelAttribute
+	public void getUserDetails(Principal p, Model m) {
+	    if (p != null) {
+	        try {
+	            String email = p.getName();
+	            UserDtls userDtls = userService.getUserByEmail(email);
+	            if (userDtls != null) {
+	                m.addAttribute("user", userDtls);
+	                Integer countCart = cartService.getCountCart(userDtls.getId());
+	                m.addAttribute("countCart", countCart != null ? countCart : 0);
+	            }
+	        } catch (Exception e) {
+	            e.printStackTrace();
+	            m.addAttribute("countCart", 0);
+	        }
+	    }
+	    
+	    try {
+	        List<Category> allActiveCategory = categoryService.getAllActiveCategory();
+	        m.addAttribute("categorys", allActiveCategory != null ? allActiveCategory : new ArrayList<>());
+	    } catch (Exception e) {
+	        e.printStackTrace();
+	        m.addAttribute("categorys", new ArrayList<>());
+	    }
+	}
 
     @GetMapping
     public String notificationsPage(Model model, Principal principal) {

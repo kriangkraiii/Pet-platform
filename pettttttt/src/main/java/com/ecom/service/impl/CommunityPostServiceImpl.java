@@ -32,26 +32,28 @@ public class CommunityPostServiceImpl implements CommunityPostService {
     @Override
     @Transactional
     public boolean deletePostWithDependencies(Long postId) {
-        CommunityPost post = communityPostRepository.findById(postId).orElse(null);
-        if (post == null) 
+        try {
+            CommunityPost post = communityPostRepository.findById(postId).orElse(null);
+            if (post == null) {
+                return false;
+            }
+
+            // ลบ comments ก่อน
+            petCommentRepository.deleteByPostId(postId);
+
+            // ลบ likes
+            postLikeRepository.deleteByPost(post);
+
+            // ลบ notifications ที่เกี่ยวข้อง
+            notificationRepository.deleteByPost(post);
+
+            // ลบ post สุดท้าย
+            communityPostRepository.delete(post);
+
+            return true;
+        } catch (Exception e) {
+            e.printStackTrace();
             return false;
-
-        // 1) ลบ comments/likes/notifications ที่อิงโพสต์
-        petCommentRepository.deleteByPostId(postId);
-        postLikeRepository.deleteByPostId(postId);
-        notificationRepository.deleteByPostId(postId);
-
-        // 2) ลบไฟล์รูป (ถ้ามี)
-        String postImage = post.getPostImage();
-        if (postImage != null && !postImage.isBlank()) {
-            try {
-                Files.deleteIfExists(Paths.get("src/main/resources/static" + postImage));
-            } catch (Exception ignored) {}
         }
-
-        // 3) ลบโพสต์
-        communityPostRepository.delete(post);
-        return true;
     }
-
 }

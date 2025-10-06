@@ -3,7 +3,7 @@
 	th:replace="~{base::layout(~{::section})}">
 <head>
 <meta charset="UTF-8">
-<title>Insert title here</title>
+<title>Edit Product</title>
 </head>
 <body>
 	<section>
@@ -100,7 +100,7 @@
 									</div>
 
 									<div class="mt-1">
-										<img th:src="@{'/img/product_img/'+${product.image}}"
+										<img th:src="${product.image}"
 											width="100px" height="100px">
 									</div>
 

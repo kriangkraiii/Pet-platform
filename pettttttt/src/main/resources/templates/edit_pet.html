@@ -49,7 +49,7 @@
 							onchange="previewImage(event)">
 
 						<!-- แสดงภาพเดิม -->
-						<img id="preview" th:src="@{'/img/pet_img/' + ${pet.imagePet}}" alt="Current Pet Image"
+						<img id="preview" th:src="${pet.imagePet}" alt="Current Pet Image"
 							class="mt-2" style="width: 150px; height: 150px; object-fit: cover;">
 					</div>
 

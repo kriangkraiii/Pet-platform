@@ -1,14 +1,10 @@
 package com.ecom.controller;
 
-import java.io.File;
-import java.io.IOException;
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
 import java.security.Principal;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
@@ -21,10 +17,16 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.ecom.model.Category;
 import com.ecom.model.Pet;
 import com.ecom.model.UserDtls;
+import com.ecom.service.FileService;
 import com.ecom.service.PetService;
 import com.ecom.service.UserService;
+import com.ecom.util.BucketType;
+import com.ecom.util.CommonUtil;
+import com.ecom.service.CartService;
+import com.ecom.service.CategoryService;
 
 import jakarta.servlet.http.HttpSession;
 
@@ -37,6 +39,18 @@ public class PetController {
 
 	@Autowired
 	private UserService userService;
+	
+	@Autowired
+	private FileService fileService;
+	
+	@Autowired
+	private CommonUtil commonUtil;
+	
+	@Autowired
+	private CategoryService categoryService;
+	
+	@Autowired
+	private CartService cartService;
 
 	@ModelAttribute("user")
 	public UserDtls getLoggedInUser(Principal principal) {
@@ -44,6 +58,32 @@ public class PetController {
 			return userService.getUserByEmail(principal.getName());
 		}
 		return null;
+	}
+	
+	@ModelAttribute
+	public void getUserDetails(Principal p, Model m) {
+	    if (p != null) {
+	        try {
+	            String email = p.getName();
+	            UserDtls userDtls = userService.getUserByEmail(email);
+	            if (userDtls != null) {
+	                m.addAttribute("user", userDtls);
+	                Integer countCart = cartService.getCountCart(userDtls.getId());
+	                m.addAttribute("countCart", countCart != null ? countCart : 0);
+	            }
+	        } catch (Exception e) {
+	            e.printStackTrace();
+	            m.addAttribute("countCart", 0);
+	        }
+	    }
+	    
+	    try {
+	        List<Category> allActiveCategory = categoryService.getAllActiveCategory();
+	        m.addAttribute("categorys", allActiveCategory != null ? allActiveCategory : new ArrayList<>());
+	    } catch (Exception e) {
+	        e.printStackTrace();
+	        m.addAttribute("categorys", new ArrayList<>());
+	    }
 	}
 
 	@GetMapping
@@ -79,7 +119,7 @@ public class PetController {
 		}
 
 		model.addAttribute("pet", new Pet());
-		return "add_pet"; // ชื่อไฟล์ HTML สำหรับฟอร์มเพิ่มสัตว์เลี้ยง
+		return "add_pet"; 
 	}
 	// Add new pet
 	@PostMapping("/add")
@@ -98,37 +138,36 @@ public class PetController {
 			return "redirect:/login";
 		}
 
-		String imagePath = "/img/pet_img/default.jpg"; // default image path
+		//String imagePath = "/img/pet_img/default.jpg"; // default image path
 
-		try {
-			if (!imageFile.isEmpty()) {
-				String originalFilename = imageFile.getOriginalFilename();
-				String fileExtension = originalFilename.substring(originalFilename.lastIndexOf(".") + 1).toLowerCase();
+		String imageUrl = commonUtil.getImageUrl(imageFile, BucketType.PETPROFILE.getId());
 
-				if (!List.of("jpg", "jpeg", "png", "gif", "webp").contains(fileExtension)) {
-					session.setAttribute("errorImagePMsg", "only image files are allowed (jpg, jpeg, png, gif, webp)");
-					return "redirect:/user/pet";
-				}
-
-				String fileName = UUID.randomUUID().toString() + "_" + originalFilename.replaceAll("\\s+", "_");
-				String uploadDir = System.getProperty("user.dir") + "/uploads/pet_img/";
-				
-				File uploadFolder = new File(uploadDir);
-				if (!uploadFolder.exists()) {
-					uploadFolder.mkdirs();
-				}
-
-				Path filePath = Paths.get(uploadDir, fileName);
-				Files.copy(imageFile.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
-
-				String imagePet = fileName;  
-				petService.addPet(name, type, breed, user, description, imagePet);
-			}
-			session.setAttribute("succAPMsg", "Pet added successfully!");
-		} catch (IOException e) {
-			e.printStackTrace();
-			session.setAttribute("errorAPMsg", "Pet addition failed: " + e.getMessage());
+		if (!imageFile.isEmpty()) {
+//				String originalFilename = imageFile.getOriginalFilename();
+//				String fileExtension = originalFilename.substring(originalFilename.lastIndexOf(".") + 1).toLowerCase();
+//
+//				if (!List.of("jpg", "jpeg", "png", "gif", "webp").contains(fileExtension)) {
+//					session.setAttribute("errorImagePMsg", "only image files are allowed (jpg, jpeg, png, gif, webp)");
+//					return "redirect:/user/pet";
+//				}
+//
+//				String fileName = UUID.randomUUID().toString() + "_" + originalFilename.replaceAll("\\s+", "_");
+//				String uploadDir = System.getProperty("user.dir") + "/uploads/pet_img/";
+//				
+//				File uploadFolder = new File(uploadDir);
+//				if (!uploadFolder.exists()) {
+//					uploadFolder.mkdirs();
+//				}
+//
+//				Path filePath = Paths.get(uploadDir, fileName);
+//				Files.copy(imageFile.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
+//
+//				//String imagePet = fileName;  
+			petService.addPet(name, type, breed, user, description, imageUrl);
+			
 		}
+		session.setAttribute("succAPMsg", "Pet added successfully!");
+		fileService.uploadFileS3(imageFile	, 4);
 
 		return "redirect:/user/pet";
 	}
@@ -222,55 +261,57 @@ public class PetController {
 	        return "redirect:/user/pet";
 	    }
 
+	    
 	    try {
-	        String imageName = existingPet.getImagePet(); // ตอนนี้เก็บเป็น "ชื่อไฟล์" เช่น dog.png
+	        //String imageName = existingPet.getImagePet(); 
+	        String imageUrl = commonUtil.getImageUrl(imageFile, BucketType.PETPROFILE.getId());
 
-	        if (!imageFile.isEmpty()) {
-	            String originalFilename = imageFile.getOriginalFilename();
-	            String fileExtension = originalFilename.substring(originalFilename.lastIndexOf(".") + 1).toLowerCase();
+//	        if (!imageFile.isEmpty()) {
+//	            String originalFilename = imageFile.getOriginalFilename();
+//	            String fileExtension = originalFilename.substring(originalFilename.lastIndexOf(".") + 1).toLowerCase();
+//
+//	            if (!List.of("jpg", "jpeg", "png", "gif", "webp").contains(fileExtension)) {
+//	                session.setAttribute("errorImagePMsg", "only image files are allowed (jpg, jpeg, png, gif, webp)");
+//	                return "redirect:/user/pet";
+//	            }
+//
+//	         
+//	            if (imageName != null && !imageName.equals("default.jpg")) {
+//	                String oldImagePath = System.getProperty("user.dir") + "/uploads/pet_img/" + imageName;
+//	                Files.deleteIfExists(Paths.get(oldImagePath));
+//	            }
+//
+////	          
+////	            String fileName = UUID.randomUUID().toString() + "_" + originalFilename.replaceAll("\\s+", "_");
+////
+////	            String uploadDir = System.getProperty("user.dir") + "/uploads/pet_img/";
+////	            File uploadFolder = new File(uploadDir);
+////	            if (!uploadFolder.exists()) {
+////	                uploadFolder.mkdirs();
+////	            }
+//
+//	            Path filePath = Paths.get(uploadDir, fileName);
+//	            Files.copy(imageFile.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
+//
+//	            imageName = fileName;
+//	            
+//	        }
 
-	            if (!List.of("jpg", "jpeg", "png", "gif", "webp").contains(fileExtension)) {
-	                session.setAttribute("errorImagePMsg", "only image files are allowed (jpg, jpeg, png, gif, webp)");
-	                return "redirect:/user/pet";
-	            }
-
-	            // 🔥 ลบไฟล์เก่า (ถ้าไม่ใช่ default)
-	            if (imageName != null && !imageName.equals("default.jpg")) {
-	                String oldImagePath = System.getProperty("user.dir") + "/uploads/pet_img/" + imageName;
-	                Files.deleteIfExists(Paths.get(oldImagePath));
-	            }
-
-	            // 🔥 สร้างชื่อไฟล์ใหม่
-	            String fileName = UUID.randomUUID().toString() + "_" + originalFilename.replaceAll("\\s+", "_");
-
-	            // 🔥 เซฟไปที่ external uploads
-	            String uploadDir = System.getProperty("user.dir") + "/uploads/pet_img/";
-	            File uploadFolder = new File(uploadDir);
-	            if (!uploadFolder.exists()) {
-	                uploadFolder.mkdirs();
-	            }
-
-	            Path filePath = Paths.get(uploadDir, fileName);
-	            Files.copy(imageFile.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
-
-	            // ✅ เก็บใน DB แค่ชื่อไฟล์
-	            imageName = fileName;
-	        }
-
-	        // อัปเดตข้อมูลสัตว์เลี้ยง
+	      
 	        existingPet.setName(name);
 	        existingPet.setType(type);
 	        existingPet.setBreed(breed);
 	       
 	        existingPet.setDescription(description);
-	        existingPet.setImagePet(imageName); // เก็บชื่อไฟล์
+	        existingPet.setImagePet(imageUrl); 
 	        existingPet.setOwner(user);
 
 	        petService.updatePet(existingPet);
 	        session.setAttribute("succUPMsg", "updated successfully!");
-	    } catch (IOException e) {
-	        e.printStackTrace();
-	        session.setAttribute("errorUPMsg", "updated failed " + e.getMessage());
+	        fileService.uploadFileS3(imageFile	, 4);
+	    } catch (Exception e) {
+	        
+	        session.setAttribute("errorUPMsg", "updated failed "+ e.getMessage());
 	    }
 
 	    return "redirect:/user/pet";

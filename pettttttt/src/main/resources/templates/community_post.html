@@ -162,7 +162,7 @@
             <div class="post-header">
                 <!-- User Profile -->
                 <div class="user-profile">
-                    <img th:src="@{${post.user.profileImage ?: '/img/profile_img/default.jpg'}}" alt="User Profile">
+                    <img th:src="${post.user.profileImage}" alt="User Profile">
                     <div class="profile-info">
                         <div class="profile-name" th:text="${post.user.name}">User Name</div>
                         <div class="profile-label">Owner</div>
@@ -176,7 +176,7 @@
 
                 <!-- Pet Profile -->
                 <div class="pet-profile">
-                    <img th:src="@{${post.pet.imagePet}}" alt="Pet Profile">
+                    <img th:src="${post.pet.imagePet}" alt="Pet Profile">
                     <div class="profile-info">
                         <div class="profile-name" th:text="${post.pet.name}">Pet Name</div>
                         <div class="profile-label" th:text="${post.pet.type}">Pet Type</div>
@@ -196,7 +196,7 @@
 
             <!-- Post Image -->
             <img class="post-image" 
-                 th:src="${post.postImage != null ? '/uploads/posts/' + post.postImage : '/uploads/pet_img/' + post.pet.imagePet}" 
+                 th:src="${post.postImage}" 
                  alt="Post Image"/>
 
             <!-- Pet Details -->

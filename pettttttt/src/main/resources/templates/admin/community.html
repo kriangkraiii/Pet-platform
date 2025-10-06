@@ -116,9 +116,9 @@
 							<div class="post-header">
 								<div class="d-flex justify-content-between align-items-center">
 									<div class="d-flex align-items-center">
-										<img th:src="${post.user.profileImage != null ? '/img/profile_img/' + post.user.profileImage : '/img/profile_img/default.jpg'}"
+										<img th:src="${post.user.profileImage}"
 											class="rounded-circle me-2"
-											style="width: 40px; height: 40px; object-fit: cover;">
+											style="width: 40px; height: 40px; object-fit: cover;"onerror="this.src='/img/profile_img/default.png'">
 										<div>
 											<h6 class="mb-0" th:text="${post.user.name}"></h6>
 											<small class="text-muted"
@@ -134,7 +134,7 @@
 								<!-- Pet Info -->
 								<div class="pet-info d-flex align-items-center" 
 															     style="background: #f8fafc; padding: 12px; border-radius: 8px; margin: 12px 0;">
-																<img th:src="@{'/img/pet_img/' + ${post.pet.imagePet}}" 
+																<img th:src="${post.pet.imagePet}" 
 																     alt="Pet Image"
 																     style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover; margin-right: 12px;">
 																<div>
@@ -152,7 +152,7 @@
 
 <!-- Post Image -->
 <div th:if="${post.postImage != null and !post.postImage.empty}" class="mb-3">
-    <img th:src="@{'/uploads/posts/' + ${post.postImage}}" 
+    <img th:src="${post.postImage}" 
          th:if="${post.postImage != null}" 
          class="post-image" 
          style="max-height: 200px; width: auto; object-fit: cover;">

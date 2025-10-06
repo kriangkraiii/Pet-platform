@@ -152,7 +152,7 @@
 								<tr th:each="p,c:${products}" class="align-middle">
 									<th scope="row" class="text-center">[[${c.count}]]</th>
 									<td class="text-center"><img
-										th:src="@{'/img/product_img/'+${p.image}}" class="rounded"
+										th:src="${p.image}" class="rounded"
 										width="60" height="60" style="object-fit: cover;"></td>
 									<td>
 										<div>

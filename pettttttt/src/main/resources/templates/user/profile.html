@@ -3,7 +3,7 @@
 
 <head>
 	<meta charset="UTF-8">
-	<title>Insert title here</title>
+	<title>Profile</title>
 </head>
 
 <body>
@@ -27,7 +27,7 @@
 
 					<!-- Profile Image -->
 <div class="d-flex justify-content-center mb-4">
-    <img th:src="@{${user.profileImage != null and user.profileImage != '' ? '/img/profile_img/' + user.profileImage : '/img/profile_img/default.png'}}" 
+    <img th:src="${user.profileImage}" 
          alt="Profile Image"
          class="border p-2" 
          style="width: 180px; height: 180px; border-radius: 50%; object-fit: cover;"

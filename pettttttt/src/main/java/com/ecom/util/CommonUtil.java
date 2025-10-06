@@ -4,12 +4,15 @@ import java.io.UnsupportedEncodingException;
 import java.security.Principal;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Component;
+import org.springframework.web.multipart.MultipartFile;
 
 import com.ecom.model.ProductOrder;
 import com.ecom.model.UserDtls;
+import com.ecom.service.FileService;
 import com.ecom.service.UserService;
 
 import jakarta.mail.MessagingException;
@@ -24,6 +27,21 @@ public class CommonUtil {
 	
 	@Autowired
 	private UserService userService;
+	
+	@Value("${aws.s3.bucket.category}")
+	private String categoryBucket;
+
+	@Value("${aws.s3.bucket.product}")
+	private String productBucket;
+
+	@Value("${aws.s3.bucket.profile}")
+	private String profileBucket;
+
+	@Value("${aws.s3.bucket.petprofile}")
+	private String petprofileBucket;
+
+	@Value("${aws.s3.bucket.petpost}")
+	private String petpostBucket;
 
 	public Boolean sendMail(String url, String reciepentEmail) throws UnsupportedEncodingException, MessagingException {
 
@@ -36,10 +54,10 @@ public class CommonUtil {
 	    String content = "<p>Hello,</p>" 
 	            + "<p>You have requested to reset your password.</p>"
 	            + "<p>Click the link below to change your password:</p>" 
-	            + "<p><a href=\"" + url + "\">Change my password</a></p>"
-	            + "<br>"
-	            + "<p>If the above link doesn't work, copy and paste this URL into your browser:</p>"
-	            + "<p>" + url + "</p>";
+	            + "<p><a href=\"" + url + "\">Change my password</a></p>";
+//	            + "<br>"
+//	            + "<p>If the above link doesn't work, copy and paste this URL into your browser:</p>"
+//	            + "<p>" + url + "</p>";
 	    
 	    helper.setSubject("Password Reset");
 	    helper.setText(content, true); // true enables HTML content
@@ -110,6 +128,31 @@ public class CommonUtil {
 		String email = p.getName();
 		UserDtls userDtls = userService.getUserByEmail(email);
 		return userDtls;
+	}
+	
+	public String getImageUrl(MultipartFile file, Integer bucketType) {
+		String bucketName = null;
+		
+		if (bucketType == 1) {
+			bucketName = categoryBucket;
+		} else if (bucketType == 2) {
+
+			bucketName = productBucket;
+		} else if (bucketType == 3) {
+			bucketName = profileBucket;
+		} else if (bucketType == 4) {
+			bucketName = petprofileBucket;
+		} else if (bucketType == 5) {
+			bucketName = petpostBucket;
+		}else {
+			throw new IllegalArgumentException("Invalid bucket type");
+		}
+		
+		String imageName = file != null ? file.getOriginalFilename() : "default.png";
+		
+		String url = "https://"+bucketName+".s3.amazonaws.com/"+imageName;
+		return url;
+	
 	}
 	
 
