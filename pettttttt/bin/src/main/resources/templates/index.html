@@ -3,14 +3,79 @@
 	th:replace="~{base::layout(~{::section})}">
 <head>
 <meta charset="UTF-8">
-<title>Insert title here</title>
+<title>Petverse</title>
+
 </head>
 <body>
 	<section>
+	<style>
+/* Category Cards */
+.category-card {
+    transition: transform 0.3s ease;
+}
+
+.category-card:hover {
+    transform: translateY(-5px);
+}
+
+.category-image-wrapper {
+    position: relative;
+    overflow: hidden;
+    border-radius: 20px;
+    aspect-ratio: 1;
+}
+
+.category-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.3s ease;
+    border-radius: 20px;
+}
+
+.category-card:hover .category-image {
+    transform: scale(1.1);
+}
+
+.category-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    border-radius: 20px;
+}
+
+.category-card:hover .category-overlay {
+    opacity: 1;
+}
+
+.category-overlay i {
+    color: #fff;
+    font-size: 2rem;
+}
+
+.category-title {
+    color: #333;
+    font-weight: 600;
+    font-size: 0.95rem;
+}
+
+.category-card:hover .category-title {
+    color: #0d6efd;
+}
+
+</style>
 		<!-- Start Slider  -->
 
 		<div id="carouselExample" class="carousel slide carousel-custom"
-			data-bs-ride="carousel" data-bs-interval="4000">
+			data-bs-ride="carousel" data-bs-interval="5000">
 			<div class="carousel-inner">
 				<div class="carousel-item active">
 					<img src="img/banner.jpg" class="d-block w-100" alt="...">
@@ -38,7 +103,7 @@
             <div class="category-card">
                 <a th:href="@{'/products?category='+${c.name}}" class="text-decoration-none">
                     <div class="category-image-wrapper">
-                        <img th:src="@{'img/category_img/'+${c.imageName}}" 
+                        <img th:src="${c.imageName}" 
                              th:alt="${c.name}"
                              class="category-image">
                         <div class="category-overlay">
@@ -65,7 +130,7 @@
             <div class="col-lg-3 col-md-4 col-sm-6" th:each="p:${products}">
                 <div class="product-card h-100">
                     <div class="product-image-wrapper">
-                        <img th:src="@{'img/product_img/'+${p.image}}" 
+                        <img th:src="${p.image}" 
                              th:alt="${p.title}"
                              class="product-image">
                         <div class="product-overlay">
@@ -82,7 +147,7 @@
                             </a>
                         </h6>
                         <div class="d-flex justify-content-between align-items-center">
-                            <span class="price fw-bold text-primary">$[[${p.discountPrice}]]</span>
+                            <span class="price fw-bold text-primary">฿[[${p.discountPrice}]]</span>
 
                         </div>
                     </div>
@@ -97,7 +162,7 @@
         </div>
     </div>
 </section>
-<!-- End Latest Product Module -->
+
 
 </body>
 </html>

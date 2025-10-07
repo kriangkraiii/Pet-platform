@@ -1,10 +1,11 @@
 <!DOCTYPE html>
-<html lang="en" xmlns:th="http://www.thymeleaf.org"
-	th:replace="~{base::layout(~{::section})}">
+<html lang="en" xmlns:th="http://www.thymeleaf.org" th:replace="~{base::layout(~{::section})}">
+
 <head>
-<meta charset="UTF-8">
-<title>Insert title here</title>
+	<meta charset="UTF-8">
+	<title>Profile</title>
 </head>
+
 <body>
 	<section>
 		<div class="container-fluid mt-5 p-5 bg-light">
@@ -21,16 +22,18 @@
 						<p class="text-danger fw-bold text-center">[[${session.errorMsg}]]</p>
 						<th:block th:text="${@commnServiceImpl.removeSessionMessage()}"></th:block>
 					</th:block>
-					
+
 					<hr>
-					
+
 					<!-- Profile Image -->
-					<div class="d-flex justify-content-center mb-4">
-						<img alt="" th:src="@{'../img/profile_img/'+${user.profileImage}}"
-							class="border p-2"
-							style="width: 180px; height: 180px; border-radius: 50%;">
-					</div>
-					
+<div class="d-flex justify-content-center mb-4">
+    <img th:src="${user.profileImage}" 
+         alt="Profile Image"
+         class="border p-2" 
+         style="width: 180px; height: 180px; border-radius: 50%; object-fit: cover;"
+         onerror="this.src='/img/profile_img/default.png'">
+</div>
+
 					<!-- Profile Update Form -->
 					<div class="card shadow-sm mb-5">
 						<div class="card-header bg-primary text-white">
@@ -45,10 +48,11 @@
 									</div>
 									<div class="col-md-6">
 										<label class="form-label fw-bold">Mobile Number</label>
-										<input type="text" name="mobileNumber" class="form-control" th:value="${user.mobileNumber}">
+										<input type="text" name="mobileNumber" class="form-control"
+											th:value="${user.mobileNumber}">
 									</div>
 								</div>
-								
+
 								<div class="row mb-3">
 									<div class="col-md-6">
 										<label class="form-label fw-bold">Email</label>
@@ -56,10 +60,11 @@
 									</div>
 									<div class="col-md-6">
 										<label class="form-label fw-bold">Address</label>
-										<input type="text" name="address" class="form-control" th:value="${user.address}">
+										<input type="text" name="address" class="form-control"
+											th:value="${user.address}">
 									</div>
 								</div>
-								
+
 								<div class="row mb-3">
 									<div class="col-md-4">
 										<label class="form-label fw-bold">City</label>
@@ -71,10 +76,11 @@
 									</div>
 									<div class="col-md-4">
 										<label class="form-label fw-bold">Postcode</label>
-										<input type="text" name="pincode" class="form-control" th:value="${user.pincode}">
+										<input type="text" name="pincode" class="form-control"
+											th:value="${user.pincode}">
 									</div>
 								</div>
-								
+
 								<div class="row mb-3">
 									<div class="col-md-6">
 										<label class="form-label fw-bold">Profile Image</label>
@@ -89,9 +95,9 @@
 										<input type="text" class="form-control" readonly th:value="${user.isEnable}">
 									</div>
 								</div>
-								
+
 								<input type="hidden" th:value="${user.id}" name="id">
-								
+
 								<div class="text-center">
 									<button type="submit" class="btn btn-primary px-5">Update Profile</button>
 								</div>
@@ -112,17 +118,17 @@
 											<label class="form-label fw-bold">Current Password</label>
 											<input type="password" name="currentPassword" class="form-control" required>
 										</div>
-										
+
 										<div class="mb-3">
 											<label class="form-label fw-bold">New Password</label>
 											<input type="password" name="newPassword" class="form-control" required>
 										</div>
-										
+
 										<div class="mb-3">
 											<label class="form-label fw-bold">Confirm Password</label>
 											<input type="password" name="confirmPassword" class="form-control" required>
 										</div>
-										
+
 										<div class="text-center">
 											<button type="submit" class="btn btn-warning px-5">Update Password</button>
 										</div>
@@ -137,4 +143,5 @@
 		</div>
 	</section>
 </body>
+
 </html>

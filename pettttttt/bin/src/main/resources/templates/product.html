@@ -4,6 +4,60 @@
 <head>
 <meta charset="UTF-8">
 <title>Products - E-Commerce Store</title>
+<style>
+.product-card:hover {
+	transform: translateY(-8px);
+	box-shadow: var(--shadow-lg);
+}
+
+.sticky-top {
+	z-index: 1020;
+}
+
+.badge.bg-danger {
+	font-size: 0.75rem;
+	padding: 0.25rem 0.5rem;
+}
+
+.product-card .btn {
+	transition: all 0.3s ease;
+}
+
+.product-card .btn:hover {
+	transform: translateY(-2px);
+}
+
+.pagination .page-link {
+	border-radius: var(--radius-sm);
+	margin: 0 2px;
+	border: 1px solid var(--accent);
+}
+
+.pagination .page-item.active .page-link {
+	background-color: var(--primary);
+	border-color: var(--primary);
+}
+
+@media ( max-width : 767px) {
+	.hero-section {
+		padding: var(--space-lg) 0;
+	}
+	.hero-title {
+		font-size: var(--font-size-xl);
+	}
+	.cat-div {
+		position: relative !important;
+		top: auto !important;
+	}
+	.pagination {
+		justify-content: center;
+	}
+	.d-flex.justify-content-between {
+		flex-direction: column;
+		gap: var(--space-md);
+	}
+}
+</style>
 </head>
 <body>
 	<section>
@@ -33,9 +87,9 @@
 		<!-- Main Content Area -->
 		<div class="container-fluid">
 			<div class="row">
-				<!-- Enhanced Sidebar - ลดขนาดลง -->
+				<!-- Enhanced Sidebar -->
 				<div class="col-md-2 col-lg-2 mb-4">
-					<div class="card cat-div sticky-top" style="top: 50px;">
+					<div class="card cat-div sticky-top" style="top: 100px; z-index: 1010;">
 						<div class="card-header bg-primary text-white">
 							<h6 class="mb-0">
 								<i class="fa-solid fa-list me-1"></i>Categories
@@ -92,12 +146,11 @@
 						<th:block th:if="${productsSize > 0}">
 							<div class="col-xl-3 col-lg-4 col-md-6 col-sm-6"
 								th:each="p:${products}">
-								<div class="product-card h-100 fade-in">
+								<div class="product-card h-300 fade-in">
 									<div class="position-relative overflow-hidden">
-										<img alt="[[${p.title}]]"
-											th:src="@{'/img/product_img/'+${p.image}}"
+										<img alt="[[${p.title}]]" th:src="${p.image}"
 											class="card-img-top"
-											style="height: 200px; object-fit: cover; transition: transform 0.3s ease;"
+											style="height: 480px; object-fit: cover; transition: transform 0.3s ease;"
 											onmouseover="this.style.transform='scale(1.05)'"
 											onmouseout="this.style.transform='scale(1)'">
 
@@ -126,8 +179,7 @@
 											</th:block>
 										</div>
 
-										<a th:href="@{'/product/'+${p.id}}"
-											class="btn btn-primary w-100"> <i
+										<a th:href="@{'/product/'+${p.id}}" class="btn btn-primary w-100"> <i
 											class="fa-solid fa-eye me-2"></i>View Details
 										</a>
 									</div>
@@ -163,7 +215,8 @@
 								<ul class="pagination mb-0">
 									<li class="page-item"
 										th:classappend="${isFirst} ? 'disabled':''"><a
-										class="page-link" th:href="@{'/products?pageNo='+${pageNo-1}}"
+										class="page-link"
+										th:href="@{/products(pageNo=${pageNo-1}, ch=${param.ch}, category=${param.category})}"
 										aria-label="Previous"> <i class="fa-solid fa-chevron-left"></i>
 									</a></li>
 
@@ -172,7 +225,9 @@
 										<li class="page-item"
 											th:classappend="${pageNo+1==i}?'active':''"
 											th:if="${i <= 5 || i == totalPages || (i >= pageNo && i <= pageNo + 3)}">
-											<a class="page-link" th:href="@{'/products?pageNo='+${i-1}}">[[${i}]]</a>
+											<a class="page-link"
+											th:href="@{/products(pageNo=${i-1}, ch=${param.ch}, category=${param.category})}">
+												[[${i}]] </a>
 										</li>
 										<li class="page-item disabled"
 											th:if="${i == 6 && totalPages > 7 && pageNo < 3}"><span
@@ -181,72 +236,21 @@
 
 									<li class="page-item"
 										th:classappend="${isLast} ? 'disabled':''"><a
-										class="page-link" th:href="@{'/products?pageNo='+${pageNo+1}}"
+										class="page-link"
+										th:href="@{/products(pageNo=${pageNo+1}, ch=${param.ch}, category=${param.category})}"
 										aria-label="Next"> <i class="fa-solid fa-chevron-right"></i>
 									</a></li>
 								</ul>
 							</nav>
 						</div>
 					</th:block>
+
 				</div>
 			</div>
 		</div>
 	</section>
 
 	<!-- Additional Styles -->
-	<style>
-.product-card:hover {
-	transform: translateY(-8px);
-	box-shadow: var(--shadow-lg);
-}
 
-.sticky-top {
-	z-index: 1020;
-}
-
-.badge.bg-danger {
-	font-size: 0.75rem;
-	padding: 0.25rem 0.5rem;
-}
-
-.product-card .btn {
-	transition: all 0.3s ease;
-}
-
-.product-card .btn:hover {
-	transform: translateY(-2px);
-}
-
-.pagination .page-link {
-	border-radius: var(--radius-sm);
-	margin: 0 2px;
-	border: 1px solid var(--accent);
-}
-
-.pagination .page-item.active .page-link {
-	background-color: var(--primary);
-	border-color: var(--primary);
-}
-
-@media ( max-width : 767px) {
-	.hero-section {
-		padding: var(--space-lg) 0;
-	}
-	.hero-title {
-		font-size: var(--font-size-xl);
-	}
-	.cat-div {
-		position: relative !important;
-		top: auto !important;
-	}
-	.pagination {
-		justify-content: center;
-	}
-	.d-flex.justify-content-between {
-		flex-direction: column;
-		gap: var(--space-md);
-	}
-}
-</style>
 </body>
 </html>

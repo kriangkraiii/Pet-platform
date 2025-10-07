@@ -3,17 +3,17 @@
 	th:replace="~{base::layout(~{::section})}">
 <head>
 <meta charset="UTF-8">
-<title>Insert title here</title>
+<title>Users</title>
 </head>
 <body>
 	<section>
 		<div class="container-fluid mt-5 p-5">
-				<!-- Back Button -->
-				<div class="col-12 mb-3">
-					<a href="/admin/" class="btn btn-outline-secondary">
-						<i class="fa-solid fa-arrow-left me-2"></i>Back to Dashboard
-					</a>
-				</div>
+			<!-- Back Button -->
+			<div class="col-12 mb-3">
+				<a href="/admin/" class="btn btn-outline-secondary"> <i
+					class="fa-solid fa-arrow-left me-2"></i>Back to Dashboard
+				</a>
+			</div>
 			<div class="card card-sh">
 				<div class="card-header text-center">
 					<p class="fs-4" th:if="${userType==1}">Users</p>
@@ -49,8 +49,12 @@
 						<tbody>
 							<tr th:each="u,c:${users}">
 								<th scope="row">[[${c.count}]]</th>
-								<td><img th:src="@{'/img/profile_img/'+${u.profileImage}}"
-									width="70px" height="70px"></td>
+								<td><img
+									th:src="${u.profileImage}"
+									width="70px" height="70px"
+									style="object-fit: cover; border-radius: 50%;"
+									onerror="this.src='/img/profile_img/default.png'"></td>
+
 								<td>[[${u.name}]]</td>
 								<td>[[${u.email}]]</td>
 								<td>[[${u.mobileNumber}]]</td>
@@ -60,7 +64,9 @@
 									th:href="@{'/admin/updateSts?status=true&id='+${u.id}}+'&type='+${userType}"
 									class="btn btn-sm btn-primary">Active</a> <a
 									th:href="@{'/admin/updateSts?status=false&id='+${u.id}}+'&type='+${userType}"
-									class="btn btn-sm btn-danger"> Inactive</a></td>
+									class="btn btn-sm btn-danger"
+									onclick="return confirm('Are you sure you want to deactivate this user account?')">
+										Inactive</a></td>
 							</tr>
 
 						</tbody>
